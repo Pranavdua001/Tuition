@@ -1,32 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Offline Tuition App - Final</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial; background:#f4f6f8; padding:20px; }
-    .box { max-width:700px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,.1); margin-bottom:20px; }
-    h2,h3 { text-align:center; }
-    input,button { width:100%; padding:10px; margin-top:10px; }
-    button { background:#2563eb; color:#fff; border:none; cursor:pointer; }
-    table { width:100%; margin-top:15px; border-collapse:collapse; }
-    th,td { border:1px solid #ddd; padding:8px; text-align:center; }
-    th { background:#f1f5f9; }
-    .hidden { display:none; }
-    .paid { color:green; font-weight:bold; }
-    .unpaid { color:red; font-weight:bold; }
-    pre { background:#111; color:#0f0; padding:10px; overflow-x:auto; }
-  </style>
+<meta charset="UTF-8">
+<title>Offline Tuition App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{font-family:Arial;background:#f4f6f8;padding:20px}
+.box{max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.1);margin-bottom:20px}
+h2,h3{text-align:center}
+input,button{width:100%;padding:10px;margin-top:10px}
+button{background:#2563eb;color:#fff;border:none;cursor:pointer}
+table{width:100%;margin-top:15px;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:#f1f5f9}
+.hidden{display:none}
+.paid{color:green;font-weight:bold}
+.unpaid{color:red;font-weight:bold}
+</style>
 </head>
+
 <body>
 
+<!-- LOGIN -->
 <div class="box" id="loginBox">
   <h2>Login</h2>
   <input id="password" type="password" placeholder="Enter password">
   <button onclick="login()">Login</button>
 </div>
 
+<!-- TEACHER -->
 <div class="box hidden" id="teacherBox">
   <h3>Teacher Dashboard</h3>
   <button onclick="addStudent()">Add Student</button>
@@ -34,115 +37,122 @@
   <table id="teacherTable"></table>
 </div>
 
+<!-- STUDENT -->
 <div class="box hidden" id="studentBox">
   <h3>Student Dashboard</h3>
   <table id="studentTable"></table>
 </div>
 
 <script>
-const ENCODE_KEY = 5;        // key added to ASCII of each char
-const ENCODE_MULTIPLIER = 3; // multiplier for ASCII+key
+/* ================= SECURITY ================= */
+const TEACHER_PASSWORD = "1234";
+const ENCODE_KEY = 7;
+const ENCODE_MULTIPLIER = 4;
 
-let authData = null;
-let teacherData = JSON.parse(localStorage.getItem("teacherData")) || { students: [] };
+/* ================= ENCODING ================= */
+function encodeJSON(str){
+  return Array.from(str).map(c => (c.charCodeAt(0)+ENCODE_KEY)*ENCODE_MULTIPLIER);
+}
+function decodeJSON(arr){
+  return arr.map(n => String.fromCharCode((n/ENCODE_MULTIPLIER)-ENCODE_KEY)).join("");
+}
+
+/* ================= DATA ================= */
+let teacherData = JSON.parse(localStorage.getItem("teacherData")) || { students:[] };
 let loggedStudent = null;
 
-// Load auth.json
-fetch("auth.json")
-  .then(r => r.json())
-  .then(d => authData = d)
-  .catch(() => alert("auth.json not found"));
-
-// Encoding / Decoding functions
-function encodeJSON(str){ return Array.from(str).map(c=>(c.charCodeAt(0)+ENCODE_KEY)*ENCODE_MULTIPLIER); }
-function decodeJSON(arr){ return arr.map(n=>String.fromCharCode((n/ENCODE_MULTIPLIER)-ENCODE_KEY)).join(''); }
-
-/* ---------- LOGIN ---------- */
+/* ================= LOGIN ================= */
 function login(){
-  if(!authData){ alert("Auth data not loaded yet."); return; }
   const pwd = document.getElementById("password").value;
-  
-  if(pwd === authData.teacher){
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("teacherBox").classList.remove("hidden");
-    renderTeacher();
-    return;
+
+  if(pwd === TEACHER_PASSWORD){
+    hide("loginBox"); show("teacherBox"); renderTeacher(); return;
   }
 
-  for(let s in authData.students){
-    if(pwd === authData.students[s].password){
-      loggedStudent = s;
-      document.getElementById("loginBox").classList.add("hidden");
-      document.getElementById("studentBox").classList.remove("hidden");
-      renderStudent();
-      return;
-    }
+  const s = teacherData.students.find(x => x.password === pwd);
+  if(s){
+    loggedStudent = s.name;
+    hide("loginBox"); show("studentBox"); renderStudent(); return;
   }
 
   alert("Invalid password");
 }
 
-/* ---------- TEACHER FUNCTIONS ---------- */
+/* ================= TEACHER ================= */
 function addStudent(){
   const name = prompt("Student name:");
-  if(!name) return;
-  const file = name + ".json"; // file placeholder, all in one publish now
+  const password = prompt("Student password:");
+  if(!name || !password) return;
 
-  teacherData.students.push({ name, file, attendance:0, fees:0, paid:false });
-  saveTeacherData();
-  renderTeacher();
+  teacherData.students.push({
+    name,
+    password,
+    attendance:0,
+    fees:0,
+    paid:false
+  });
+
+  save(); renderTeacher();
 }
 
-function markAttendance(i){ teacherData.students[i].attendance++; saveTeacherData(); renderTeacher(); }
-function toggleFees(i){ teacherData.students[i].paid=!teacherData.students[i].paid; saveTeacherData(); renderTeacher(); }
-
 function renderTeacher(){
-  let html = `<tr><th>Name</th><th>Attendance</th><th>Fees</th><th>Status</th><th>Actions</th></tr>`;
+  let h = `<tr>
+    <th>Name</th><th>Password</th><th>Attendance</th>
+    <th>Fees</th><th>Status</th><th>Actions</th></tr>`;
+
   teacherData.students.forEach((s,i)=>{
-    html+=`<tr>
+    h+=`<tr>
       <td>${s.name}</td>
+      <td>${s.password}</td>
       <td>${s.attendance}</td>
       <td>₹${s.fees}</td>
       <td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td>
       <td>
-        <button onclick="markAttendance(${i})">+1 Attendance</button>
-        <button onclick="toggleFees(${i})">Toggle Fees</button>
+        <button onclick="att(${i})">+Attendance</button>
+        <button onclick="fee(${i})">Toggle Fee</button>
       </td>
     </tr>`;
   });
-  document.getElementById("teacherTable").innerHTML = html;
+  document.getElementById("teacherTable").innerHTML = h;
 }
+
+function att(i){ teacherData.students[i].attendance++; save(); renderTeacher(); }
+function fee(i){ teacherData.students[i].paid=!teacherData.students[i].paid; save(); renderTeacher(); }
 
 function publishAll(){
-  const jsonStr = JSON.stringify(teacherData.students, null, 2);
-  const encoded = encodeJSON(jsonStr);
-  const blob = new Blob([JSON.stringify(encoded)], { type:"application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "students.json";
-  a.click();
-  alert("All students published! Save the file in repo for student access.");
+  const encoded = encodeJSON(JSON.stringify(teacherData.students));
+  const blob = new Blob([JSON.stringify(encoded)],{type:"application/json"});
+  download(blob,"students.json");
+  alert("students.json downloaded — upload to GitHub repo");
 }
 
-function saveTeacherData(){ localStorage.setItem("teacherData", JSON.stringify(teacherData)); }
+function save(){ localStorage.setItem("teacherData",JSON.stringify(teacherData)); }
 
-/* ---------- STUDENT FUNCTIONS ---------- */
+/* ================= STUDENT ================= */
 function renderStudent(){
   fetch("students.json")
     .then(r=>r.json())
-    .then(encodedArr=>{
-      const jsonStr = decodeJSON(encodedArr);
-      const students = JSON.parse(jsonStr);
-      const s = students.find(x=>x.name === loggedStudent);
-      if(!s){ document.getElementById("studentTable").innerHTML="Data not available"; return; }
-      document.getElementById("studentTable").innerHTML = `
+    .then(arr=>{
+      const students = JSON.parse(decodeJSON(arr));
+      const s = students.find(x=>x.name===loggedStudent);
+      if(!s) throw 0;
+      document.getElementById("studentTable").innerHTML=`
         <tr><th>Name</th><td>${s.name}</td></tr>
         <tr><th>Attendance</th><td>${s.attendance}</td></tr>
         <tr><th>Fees</th><td>₹${s.fees}</td></tr>
         <tr><th>Status</th><td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td></tr>
       `;
     })
-    .catch(()=> document.getElementById("studentTable").innerHTML="Teacher has not published your data yet");
+    .catch(()=>document.getElementById("studentTable").innerHTML="No published data yet");
+}
+
+/* ================= HELPERS ================= */
+function hide(id){document.getElementById(id).classList.add("hidden")}
+function show(id){document.getElementById(id).classList.remove("hidden")}
+function download(blob,name){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=name; a.click();
 }
 </script>
 
