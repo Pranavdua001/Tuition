@@ -43,14 +43,21 @@
 </div>
 
 <script>
-/* ------------------ STATIC AUTH DATA ------------------ */
-let authData = {
-  "teacher": "1234",
-  "students": {
-    "rahul": { "password":"1235", "file":"student_rahul.json" },
-    "ankit": { "password":"1236", "file":"student_ankit.json" }
-  }
-};
+const ENCODE_KEY = 5;        // key added to ASCII of each char
+const ENCODE_MULTIPLIER = 3; // multiplier for the ASCII+key
+
+// Encode a JSON string into a list of numbers
+function encodeJSON(jsonString) {
+  return Array.from(jsonString).map(c => (c.charCodeAt(0) + ENCODE_KEY) * ENCODE_MULTIPLIER);
+}
+
+// Decode the list of numbers back into JSON string
+function decodeJSON(encodedArray) {
+  return encodedArray
+    .map(n => String.fromCharCode((n / ENCODE_MULTIPLIER) - ENCODE_KEY))
+    .join('');
+}
+
 
 /* ------------------ LOCAL TEACHER DATA ------------------ */
 let teacherData = JSON.parse(localStorage.getItem("teacherData")) || {
@@ -139,6 +146,8 @@ function toggleFees(i){
 
 function publishStudent(i){
   const s = teacherData.students[i];
+  const jsonStr = JSON.stringify(s, null, 2);
+  const encoded = encodeJSON(jsonStr); // array of numbers
   const blob = new Blob([JSON.stringify(s,null,2)],{type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -155,8 +164,13 @@ function saveTeacherData(){
 function renderStudent(){
   const studentFile = authData.students[loggedStudent].file;
   fetch(studentFile)
-    .then(r=>r.json())
-    .then(s=>{
+  .then(r => r.json())
+  .then(encodedArray => {
+    const jsonStr = decodeJSON(encodedArray);   // decode to string
+    const s = JSON.parse(jsonStr);             // parse JSON
+    // Now display s.name, s.attendance, etc.
+  });
+
       document.getElementById("studentTable").innerHTML = `
         <tr><th>Name</th><td>${s.name}</td></tr>
         <tr><th>Attendance</th><td>${s.attendance}</td></tr>
@@ -170,4 +184,5 @@ function renderStudent(){
 
 </body>
 </html>
+
 
