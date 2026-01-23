@@ -90,8 +90,8 @@ function addStudent(){
     name,
     password,
     joiningdate,
-    monthlyfees,
-    paid:false
+    monthlyfees: fees,
+    monthlyfeespaid: 0
   });
 
   save(); renderTeacher();
@@ -188,6 +188,7 @@ function download(blob,name){
 
 </body>
 </html>
+
 
 
 
