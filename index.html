@@ -100,7 +100,6 @@ function addStudent(){
     monthlyfeespaid: 0,
     lastFeeCycle: 0,
     history: [],
-    attendance: 0
   });
 
   updateFeeCycles();
@@ -111,7 +110,7 @@ function addStudent(){
 function renderTeacher(){
   let html = `<tr>
     <th>Name</th><th>Password</th><th>Joining Date</th>
-    <th>Monthly Fees</th><th>Fees Paid</th><th>Fees Status</th><th>Attendance</th><th>Actions</th></tr>`;
+    <th>Monthly Fees</th><th>Fees Paid</th><th>Fees Status</th><th>Actions</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
     html += `<tr>
@@ -121,10 +120,8 @@ function renderTeacher(){
       <td>₹${s.monthlyfees}</td>
       <td>₹${s.monthlyfeespaid}</td>
       <td class="${s.monthlyfeespaid >= s.monthlyfees ? 'paid':'unpaid'}">${s.monthlyfeespaid >= s.monthlyfees ? 'Paid':'Unpaid'}</td>
-      <td>${s.attendance}</td>
       <td>
         <button onclick="editFees(${i})">Edit Fees Paid</button>
-        <button onclick="markAttendance(${i})">+1 Attendance</button>
         <button onclick="delStudent(${i})">Delete</button>
       </td>
     </tr>`;
@@ -145,13 +142,6 @@ function editFees(i){
 
   s.monthlyfeespaid += add;
   s.history.push({date: new Date().toISOString().split("T")[0], paid: add});
-  save();
-  renderTeacher();
-}
-
-/* ----------- MARK ATTENDANCE ----------- */
-function markAttendance(i){
-  teacherData.students[i].attendance++;
   save();
   renderTeacher();
 }
@@ -202,7 +192,6 @@ function renderStudent(){
         <tr><th>Monthly Fees</th><td>₹${s.monthlyfees}</td></tr>
         <tr><th>Fees Paid</th><td>₹${s.monthlyfeespaid}</td></tr>
         <tr><th>Status</th><td class="${s.monthlyfeespaid>=s.monthlyfees?'paid':'unpaid'}">${s.monthlyfeespaid>=s.monthlyfees?'Paid':'Unpaid'}</td></tr>
-        <tr><th>Attendance</th><td>${s.attendance}</td></tr>
       `;
     })
     .catch(()=> document.getElementById("studentTable").innerHTML="No data published yet");
@@ -232,3 +221,4 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 
 </body>
 </html>
+
