@@ -7,7 +7,8 @@
 
 <style>
 body{font-family:Arial;background:#f4f6f8;padding:20px}
-.box{max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.1);margin-bottom:20px}
+.box{max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:10px;
+box-shadow:0 10px 25px rgba(0,0,0,.1);margin-bottom:20px}
 h2,h3{text-align:center}
 input,button{width:100%;padding:10px;margin-top:10px}
 button{background:#2563eb;color:#fff;border:none;cursor:pointer}
@@ -44,12 +45,12 @@ th{background:#f1f5f9}
 </div>
 
 <script>
-/* ================= SECURITY ================= */
+/* ================= CONFIG ================= */
 const TEACHER_PASSWORD = "1234";
 const ENCODE_KEY = 7;
 const ENCODE_MULTIPLIER = 4;
 
-/* ================= ENCODING ================= */
+/* ================= ENCODE / DECODE ================= */
 function encodeJSON(str){
   return Array.from(str).map(c => (c.charCodeAt(0)+ENCODE_KEY)*ENCODE_MULTIPLIER);
 }
@@ -66,33 +67,51 @@ function login(){
   const pwd = document.getElementById("password").value;
 
   if(pwd === TEACHER_PASSWORD){
-    hide("loginBox"); show("teacherBox"); renderTeacher(); return;
+    hide("loginBox"); show("teacherBox");
+    renderTeacher(); return;
   }
 
   const s = teacherData.students.find(x => x.password === pwd);
   if(s){
     loggedStudent = s.name;
-    hide("loginBox"); show("studentBox"); renderStudent(); return;
+    hide("loginBox"); show("studentBox");
+    renderStudent(); return;
   }
 
   alert("Invalid password");
+}
+
+/* ================= MONTH RESET ================= */
+function resetFeesIfNewMonth(s){
+  const join = new Date(s.joiningdate);
+  const now = new Date();
+
+  const monthGap =
+    (now.getFullYear() - join.getFullYear()) * 12 +
+    (now.getMonth() - join.getMonth());
+
+  if(monthGap >= 1 && s.lastResetMonth !== now.getMonth()){
+    s.monthlyfeespaid = 0;
+    s.lastResetMonth = now.getMonth();
+  }
 }
 
 /* ================= TEACHER ================= */
 function addStudent(){
   const name = prompt("Student name:");
   const password = prompt("Student password:");
-  const joiningdate = prompt("Student Joining date:");
-  const monthlyfees = prompt("Student monthlyfees");
+  const joiningdate = prompt("Joining date (YYYY-MM-DD):");
+  const monthlyfees = prompt("Monthly fees:");
+
   if(!name || !password || !joiningdate || !monthlyfees) return;
 
   teacherData.students.push({
     name,
     password,
     joiningdate,
-    monthlyfees: fees,
+    monthlyfees: Number(monthlyfees),
     monthlyfeespaid: 0,
-    monthlyfeesremaining: (s.monthlyfees - s.monthlyfeespaid)
+    lastResetMonth: new Date(joiningdate).getMonth()
   });
 
   save(); renderTeacher();
@@ -100,80 +119,73 @@ function addStudent(){
 
 function renderTeacher(){
   let h = `<tr>
-    <th>Name</th><th>Password</th><th>JoiningDate</th>
-    <th>Fees(Total)</th><th>Fees(Paid)</th><th>Fees(Remaining)</th><th>Fees(Status)</th></tr>`;
+    <th>Name</th><th>Password</th><th>Joining</th>
+    <th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th>
+  </tr>`;
 
   teacherData.students.forEach((s,i)=>{
-  h += `<tr>
-    <td>${s.name}</td>
-    <td>${s.password}</td>
-    <td>${s.joiningdate}</td>
-    <td>₹${s.monthlyfees}</td>
-    <td>₹${s.monthlyfeespaid}</td>
-    <td>₹${s.monthlyfeesremaining}</td>
-    <td class="${(s.monthlyfees - s.monthlyfeespaid) === 0 ? 'paid' : 'unpaid'}">
-      ${(s.monthlyfees - s.monthlyfeespaid) === 0 ? 'Paid' : 'Unpaid'}
-    </td>
-    <td>
-      <button onclick="att(${i})">Edit Fees Paid</button>
-      <button onclick="del(${i})">Delete data</button>
-    </td>
-  </tr>`;
-});
+    resetFeesIfNewMonth(s);
+    const remaining = s.monthlyfees - s.monthlyfeespaid;
+    const paid = remaining === 0;
 
+    h += `<tr>
+      <td>${s.name}</td>
+      <td>${s.password}</td>
+      <td>${s.joiningdate}</td>
+      <td>₹${s.monthlyfees}</td>
+      <td>₹${s.monthlyfeespaid}</td>
+      <td>₹${remaining}</td>
+      <td class="${paid?'paid':'unpaid'}">${paid?'Paid':'Unpaid'}</td>
+      <td>
+        <button onclick="att(${i})">Edit Fees</button>
+        <button onclick="del(${i})">Delete</button>
+      </td>
+    </tr>`;
+  });
+
+  save();
   document.getElementById("teacherTable").innerHTML = h;
 }
 
 function att(i){
-  let s = teacherData.students[i];
+  const s = teacherData.students[i];
+  resetFeesIfNewMonth(s);
 
   let add = prompt(
     `Enter amount paid by ${s.name}\nRemaining: ₹${s.monthlyfees - s.monthlyfeespaid}`
   );
-
   if(add === null) return;
 
   add = Number(add);
-
   if(isNaN(add) || add <= 0){
-    alert("Enter a valid amount");
-    return;
+    alert("Invalid amount"); return;
   }
 
   if(s.monthlyfeespaid + add > s.monthlyfees){
-    alert("Amount exceeds total monthly fees");
-    return;
+    alert("Exceeds monthly fees"); return;
   }
 
   s.monthlyfeespaid += add;
-
-  save();
-  renderTeacher();
-}
-function del(i) {
-  const s = teacherData.students[i];
-
-  const ok = confirm(
-    `Are you sure you want to delete this student?\n\n` +
-    `Name: ${s.name}\n` +
-    `Password: ${s.password}`
-  );
-
-  if (!ok) return;
-
-  teacherData.students.splice(i, 1); // remove student
-  save();
-  renderTeacher();
+  save(); renderTeacher();
 }
 
+function del(i){
+  if(!confirm("Delete this student permanently?")) return;
+  teacherData.students.splice(i,1);
+  save(); renderTeacher();
+}
+
+/* ================= PUBLISH ================= */
 function publishAll(){
   const encoded = encodeJSON(JSON.stringify(teacherData.students));
   const blob = new Blob([JSON.stringify(encoded)],{type:"application/json"});
   download(blob,"students.json");
-  alert("students.json downloaded — upload to GitHub repo");
+  alert("students.json downloaded. Upload to GitHub.");
 }
 
-function save(){ localStorage.setItem("teacherData",JSON.stringify(teacherData)); }
+function save(){
+  localStorage.setItem("teacherData",JSON.stringify(teacherData));
+}
 
 /* ================= STUDENT ================= */
 function renderStudent(){
@@ -183,16 +195,25 @@ function renderStudent(){
       const students = JSON.parse(decodeJSON(arr));
       const s = students.find(x=>x.name===loggedStudent);
       if(!s) throw 0;
-      document.getElementById("studentTable").innerHTML=`
+
+      const remaining = s.monthlyfees - s.monthlyfeespaid;
+      const paid = remaining === 0;
+
+      document.getElementById("studentTable").innerHTML = `
         <tr><th>Name</th><td>${s.name}</td></tr>
-        <tr><th>JoiningDate</th><td>${s.joiningdate}</td></tr>
-        <tr><th>monthlyfees</th><td>₹${s.monthlyfees}</td></tr>
-        <tr><th>Status</th><td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td></tr>
+        <tr><th>Joining</th><td>${s.joiningdate}</td></tr>
+        <tr><th>Total Fees</th><td>₹${s.monthlyfees}</td></tr>
+        <tr><th>Paid</th><td>₹${s.monthlyfeespaid}</td></tr>
+        <tr><th>Remaining</th><td>₹${remaining}</td></tr>
+        <tr><th>Status</th>
+            <td class="${paid?'paid':'unpaid'}">${paid?'Paid':'Unpaid'}</td></tr>
       `;
     })
-    .catch(()=>document.getElementById("studentTable").innerHTML="No published data yet");
+    .catch(()=>{
+      document.getElementById("studentTable").innerHTML =
+        "No published data available";
+    });
 }
-
 /* ================= HELPERS ================= */
 function hide(id){document.getElementById(id).classList.add("hidden")}
 function show(id){document.getElementById(id).classList.remove("hidden")}
@@ -202,15 +223,5 @@ function download(blob,name){
   a.download=name; a.click();
 }
 </script>
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
