@@ -7,8 +7,7 @@
 
 <style>
 body{font-family:Arial;background:#f4f6f8;padding:20px}
-.box{max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:10px;
-box-shadow:0 10px 25px rgba(0,0,0,.1);margin-bottom:20px}
+.box{max-width:1000px;margin:auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.1);margin-bottom:20px}
 h2,h3{text-align:center}
 input,button{width:100%;padding:10px;margin-top:10px}
 button{background:#2563eb;color:#fff;border:none;cursor:pointer}
@@ -45,12 +44,12 @@ th{background:#f1f5f9}
 </div>
 
 <script>
-/* ================= CONFIG ================= */
+/* ================= SECURITY ================= */
 const TEACHER_PASSWORD = "1234";
 const ENCODE_KEY = 7;
 const ENCODE_MULTIPLIER = 4;
 
-/* ================= ENCODE / DECODE ================= */
+/* ================= ENCODING ================= */
 function encodeJSON(str){
   return Array.from(str).map(c => (c.charCodeAt(0)+ENCODE_KEY)*ENCODE_MULTIPLIER);
 }
@@ -67,33 +66,16 @@ function login(){
   const pwd = document.getElementById("password").value;
 
   if(pwd === TEACHER_PASSWORD){
-    hide("loginBox"); show("teacherBox");
-    renderTeacher(); return;
+    hide("loginBox"); show("teacherBox"); updateFeeCycles(); renderTeacher(); return;
   }
 
   const s = teacherData.students.find(x => x.password === pwd);
   if(s){
     loggedStudent = s.name;
-    hide("loginBox"); show("studentBox");
-    renderStudent(); return;
+    hide("loginBox"); show("studentBox"); updateFeeCycles(); renderStudent(); return;
   }
 
   alert("Invalid password");
-}
-
-/* ================= MONTH RESET ================= */
-function resetFeesIfNewMonth(s){
-  const join = new Date(s.joiningdate);
-  const now = new Date();
-
-  const monthGap =
-    (now.getFullYear() - join.getFullYear()) * 12 +
-    (now.getMonth() - join.getMonth());
-
-  if(monthGap >= 1 && s.lastResetMonth !== now.getMonth()){
-    s.monthlyfeespaid = 0;
-    s.lastResetMonth = now.getMonth();
-  }
 }
 
 /* ================= TEACHER ================= */
@@ -101,17 +83,17 @@ function addStudent(){
   const name = prompt("Student name:");
   const password = prompt("Student password:");
   const joiningdate = prompt("Joining date (YYYY-MM-DD):");
-  const monthlyfees = prompt("Monthly fees:");
-
-  if(!name || !password || !joiningdate || !monthlyfees) return;
+  const monthlyfees = Number(prompt("Student monthly fees:"));
+  if(!name || !password || !joiningdate || isNaN(monthlyfees)) return;
 
   teacherData.students.push({
     name,
     password,
     joiningdate,
-    monthlyfees: Number(monthlyfees),
+    monthlyfees,
     monthlyfeespaid: 0,
-    lastResetMonth: new Date(joiningdate).getMonth()
+    lastFeeCycle: 0,
+    history: [] // store each month's payment
   });
 
   save(); renderTeacher();
@@ -119,73 +101,67 @@ function addStudent(){
 
 function renderTeacher(){
   let h = `<tr>
-    <th>Name</th><th>Password</th><th>Joining</th>
-    <th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th>
-  </tr>`;
+    <th>Name</th><th>Password</th><th>JoiningDate</th>
+    <th>Fees(Total)</th><th>Fees(Paid)</th><th>Status</th>
+    <th>History</th>
+    <th>Actions</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
-    resetFeesIfNewMonth(s);
-    const remaining = s.monthlyfees - s.monthlyfeespaid;
-    const paid = remaining === 0;
-
+    const status = s.monthlyfeespaid >= s.monthlyfees ? 'Paid':'Unpaid';
     h += `<tr>
       <td>${s.name}</td>
       <td>${s.password}</td>
       <td>${s.joiningdate}</td>
       <td>₹${s.monthlyfees}</td>
       <td>₹${s.monthlyfeespaid}</td>
-      <td>₹${remaining}</td>
-      <td class="${paid?'paid':'unpaid'}">${paid?'Paid':'Unpaid'}</td>
+      <td class="${status.toLowerCase()}">${status}</td>
+      <td>${s.history.map(h=>`[${h.month}]: ₹${h.paid}`).join("<br>")}</td>
       <td>
-        <button onclick="att(${i})">Edit Fees</button>
-        <button onclick="del(${i})">Delete</button>
+        <button onclick="att(${i})">Edit Fees Paid</button>
+        <button onclick="del(${i})">Delete data</button>
       </td>
     </tr>`;
   });
 
-  save();
   document.getElementById("teacherTable").innerHTML = h;
 }
 
 function att(i){
-  const s = teacherData.students[i];
-  resetFeesIfNewMonth(s);
-
-  let add = prompt(
-    `Enter amount paid by ${s.name}\nRemaining: ₹${s.monthlyfees - s.monthlyfeespaid}`
-  );
+  let s = teacherData.students[i];
+  let add = prompt(`Enter amount paid by ${s.name}\nRemaining: ₹${s.monthlyfees - s.monthlyfeespaid}`);
   if(add === null) return;
-
   add = Number(add);
-  if(isNaN(add) || add <= 0){
-    alert("Invalid amount"); return;
-  }
-
-  if(s.monthlyfeespaid + add > s.monthlyfees){
-    alert("Exceeds monthly fees"); return;
-  }
-
+  if(isNaN(add) || add <=0){ alert("Enter valid amount"); return; }
+  if(s.monthlyfeespaid + add > s.monthlyfees){ alert("Amount exceeds total fees"); return; }
   s.monthlyfeespaid += add;
+
+  // add/update history for this month
+  const today = new Date();
+  const jd = new Date(s.joiningdate);
+  let monthsPassed = (today.getFullYear()-jd.getFullYear())*12 + (today.getMonth()-jd.getMonth());
+  if(today.getDate() < jd.getDate()) monthsPassed--;
+  const monthStr = `${today.getFullYear()}-${today.getMonth()+1}`;
+  const histIndex = s.history.findIndex(h=>h.month===monthStr);
+  if(histIndex>=0) s.history[histIndex].paid = s.monthlyfeespaid;
+  else s.history.push({month:monthStr, paid:s.monthlyfeespaid});
+
   save(); renderTeacher();
 }
 
 function del(i){
-  if(!confirm("Delete this student permanently?")) return;
+  if(!confirm("Delete this student?")) return;
   teacherData.students.splice(i,1);
   save(); renderTeacher();
 }
 
-/* ================= PUBLISH ================= */
 function publishAll(){
   const encoded = encodeJSON(JSON.stringify(teacherData.students));
   const blob = new Blob([JSON.stringify(encoded)],{type:"application/json"});
   download(blob,"students.json");
-  alert("students.json downloaded. Upload to GitHub.");
+  alert("students.json downloaded — upload to GitHub repo");
 }
 
-function save(){
-  localStorage.setItem("teacherData",JSON.stringify(teacherData));
-}
+function save(){ localStorage.setItem("teacherData",JSON.stringify(teacherData)); }
 
 /* ================= STUDENT ================= */
 function renderStudent(){
@@ -195,25 +171,34 @@ function renderStudent(){
       const students = JSON.parse(decodeJSON(arr));
       const s = students.find(x=>x.name===loggedStudent);
       if(!s) throw 0;
-
-      const remaining = s.monthlyfees - s.monthlyfeespaid;
-      const paid = remaining === 0;
-
-      document.getElementById("studentTable").innerHTML = `
-        <tr><th>Name</th><td>${s.name}</td></tr>
-        <tr><th>Joining</th><td>${s.joiningdate}</td></tr>
-        <tr><th>Total Fees</th><td>₹${s.monthlyfees}</td></tr>
-        <tr><th>Paid</th><td>₹${s.monthlyfeespaid}</td></tr>
-        <tr><th>Remaining</th><td>₹${remaining}</td></tr>
-        <tr><th>Status</th>
-            <td class="${paid?'paid':'unpaid'}">${paid?'Paid':'Unpaid'}</td></tr>
-      `;
+      const status = s.monthlyfeespaid >= s.monthlyfees ? 'Paid':'Unpaid';
+      document.getElementById("studentTable").innerHTML=`<tr>
+        <th>Name</th><td>${s.name}</td></tr>
+        <tr><th>JoiningDate</th><td>${s.joiningdate}</td></tr>
+        <tr><th>monthlyfees</th><td>₹${s.monthlyfees}</td></tr>
+        <tr><th>Status</th><td class="${status.toLowerCase()}">${status}</td></tr>
+        <tr><th>History</th><td>${s.history.map(h=>`[${h.month}]: ₹${h.paid}`).join("<br>")}</td></tr>`;
     })
-    .catch(()=>{
-      document.getElementById("studentTable").innerHTML =
-        "No published data available";
-    });
+    .catch(()=>document.getElementById("studentTable").innerHTML="No published data yet");
 }
+
+/* ================= FEE CYCLE ================= */
+function updateFeeCycles(){
+  const today = new Date();
+  teacherData.students.forEach(s=>{
+    const jd = new Date(s.joiningdate);
+    let monthsPassed = (today.getFullYear()-jd.getFullYear())*12 + (today.getMonth()-jd.getMonth());
+    if(today.getDate() < jd.getDate()) monthsPassed--;
+    if(monthsPassed > s.lastFeeCycle){
+      s.monthlyfeespaid = 0; 
+      s.lastFeeCycle = monthsPassed;
+      const monthStr = `${today.getFullYear()}-${today.getMonth()+1}`;
+      s.history.push({month:monthStr, paid:0});
+    }
+  });
+  save();
+}
+
 /* ================= HELPERS ================= */
 function hide(id){document.getElementById(id).classList.add("hidden")}
 function show(id){document.getElementById(id).classList.remove("hidden")}
@@ -223,5 +208,6 @@ function download(blob,name){
   a.download=name; a.click();
 }
 </script>
+
 </body>
 </html>
