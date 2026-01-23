@@ -87,7 +87,7 @@ function addStudent(){
   teacherData.students.push({
     name,
     password,
-    attendance:0,
+    joiningdate:0,
     fees:0,
     paid:false
   });
@@ -97,18 +97,18 @@ function addStudent(){
 
 function renderTeacher(){
   let h = `<tr>
-    <th>Name</th><th>Password</th><th>Attendance</th>
+    <th>Name</th><th>Password</th><th>joiningdate</th>
     <th>Fees</th><th>Status</th><th>Actions</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
     h+=`<tr>
       <td>${s.name}</td>
       <td>${s.password}</td>
-      <td>${s.attendance}</td>
+      <td>${s.joiningdate}</td>
       <td>₹${s.fees}</td>
       <td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td>
       <td>
-        <button onclick="att(${i})">+Attendance</button>
+        <button onclick="att(${i})">+joiningdate</button>
         <button onclick="fee(${i})">Toggle Fee</button>
       </td>
     </tr>`;
@@ -116,7 +116,7 @@ function renderTeacher(){
   document.getElementById("teacherTable").innerHTML = h;
 }
 
-function att(i){ teacherData.students[i].attendance++; save(); renderTeacher(); }
+function att(i){ teacherData.students[i].joiningdate++; save(); renderTeacher(); }
 function fee(i){ teacherData.students[i].paid=!teacherData.students[i].paid; save(); renderTeacher(); }
 
 function publishAll(){
@@ -138,7 +138,7 @@ function renderStudent(){
       if(!s) throw 0;
       document.getElementById("studentTable").innerHTML=`
         <tr><th>Name</th><td>${s.name}</td></tr>
-        <tr><th>Attendance</th><td>${s.attendance}</td></tr>
+        <tr><th>JoiningDate</th><td>${s.joiningdate}</td></tr>
         <tr><th>Fees</th><td>₹${s.fees}</td></tr>
         <tr><th>Status</th><td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td></tr>
       `;
@@ -158,3 +158,4 @@ function download(blob,name){
 
 </body>
 </html>
+
