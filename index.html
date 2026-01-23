@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Offline Tuition App - Final</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial; background:#f4f6f8; padding:20px; }
+    .box { max-width:700px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,.1); margin-bottom:20px; }
+    h2,h3 { text-align:center; }
+    input,button { width:100%; padding:10px; margin-top:10px; }
+    button { background:#2563eb; color:#fff; border:none; cursor:pointer; }
+    table { width:100%; margin-top:15px; border-collapse:collapse; }
+    th,td { border:1px solid #ddd; padding:8px; text-align:center; }
+    th { background:#f1f5f9; }
+    .hidden { display:none; }
+    .paid { color:green; font-weight:bold; }
+    .unpaid { color:red; font-weight:bold; }
+    pre { background:#111; color:#0f0; padding:10px; overflow-x:auto; }
+  </style>
+</head>
+<body>
+
+<div class="box" id="loginBox">
+  <h2>Login</h2>
+  <input id="password" type="password" placeholder="Enter password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- TEACHER DASHBOARD -->
+<div class="box hidden" id="teacherBox">
+  <h3>Teacher Dashboard</h3>
+
+  <button onclick="addStudent()">Add Student</button>
+
+  <table id="teacherTable"></table>
+</div>
+
+<!-- STUDENT DASHBOARD -->
+<div class="box hidden" id="studentBox">
+  <h3>Student Dashboard</h3>
+  <table id="studentTable"></table>
+</div>
+
+<script>
+/* ------------------ STATIC AUTH DATA ------------------ */
+let authData = {
+  "teacher": "1234",
+  "students": {
+    "rahul": { "password":"1235", "file":"student_rahul.json" },
+    "ankit": { "password":"1236", "file":"student_ankit.json" }
+  }
+};
+
+/* ------------------ LOCAL TEACHER DATA ------------------ */
+let teacherData = JSON.parse(localStorage.getItem("teacherData")) || {
+  students: []
+};
+
+let loggedStudent = null;
+
+/* ------------------ LOGIN ------------------ */
+function login() {
+  const pwd = document.getElementById("password").value;
+
+  if(pwd === authData.teacher){
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("teacherBox").classList.remove("hidden");
+    renderTeacher();
+    return;
+  }
+
+  for(let s in authData.students){
+    if(pwd === authData.students[s].password){
+      loggedStudent = s;
+      document.getElementById("loginBox").classList.add("hidden");
+      document.getElementById("studentBox").classList.remove("hidden");
+      renderStudent();
+      return;
+    }
+  }
+
+  alert("Invalid password");
+}
+
+/* ------------------ TEACHER FUNCTIONS ------------------ */
+function addStudent(){
+  const name = prompt("Enter student name:");
+  if(!name) return;
+  const file = prompt("Enter student data filename (e.g., student_"+name+".json):");
+  if(!file) return;
+
+  teacherData.students.push({
+    name:name,
+    file:file,
+    attendance:0,
+    fees:0,
+    paid:false
+  });
+
+  saveTeacherData();
+  renderTeacher();
+}
+
+function renderTeacher(){
+  let html = `<tr>
+      <th>Name</th><th>Data File</th><th>Attendance</th><th>Fees</th><th>Status</th><th>Actions</th>
+    </tr>`;
+
+  teacherData.students.forEach((s,i)=>{
+    html+=`<tr>
+      <td>${s.name}</td>
+      <td>${s.file}</td>
+      <td>${s.attendance}</td>
+      <td>₹${s.fees}</td>
+      <td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td>
+      <td>
+        <button onclick="markAttendance(${i})">+1 Attendance</button>
+        <button onclick="toggleFees(${i})">Toggle Fees</button>
+        <button onclick="publishStudent(${i})">Publish</button>
+      </td>
+    </tr>`;
+  });
+
+  document.getElementById("teacherTable").innerHTML = html;
+}
+
+function markAttendance(i){
+  teacherData.students[i].attendance++;
+  saveTeacherData();
+  renderTeacher();
+}
+
+function toggleFees(i){
+  teacherData.students[i].paid = !teacherData.students[i].paid;
+  saveTeacherData();
+  renderTeacher();
+}
+
+function publishStudent(i){
+  const s = teacherData.students[i];
+  const blob = new Blob([JSON.stringify(s,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = s.file;
+  a.click();
+  alert("Download the file and place in /data folder for student access");
+}
+
+function saveTeacherData(){
+  localStorage.setItem("teacherData",JSON.stringify(teacherData));
+}
+
+/* ------------------ STUDENT FUNCTIONS ------------------ */
+function renderStudent(){
+  const studentFile = authData.students[loggedStudent].file;
+  fetch("data/"+studentFile)
+    .then(r=>r.json())
+    .then(s=>{
+      document.getElementById("studentTable").innerHTML = `
+        <tr><th>Name</th><td>${s.name}</td></tr>
+        <tr><th>Attendance</th><td>${s.attendance}</td></tr>
+        <tr><th>Fees</th><td>₹${s.fees}</td></tr>
+        <tr><th>Status</th><td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td></tr>
+      `;
+    })
+    .catch(()=> document.getElementById("studentTable").innerHTML = "Teacher has not published your data yet");
+}
+</script>
+
+</body>
+</html>
