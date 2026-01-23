@@ -99,8 +99,8 @@ function addStudent(){
 
 function renderTeacher(){
   let h = `<tr>
-    <th>Name</th><th>Password</th><th>joiningdate</th>
-    <th>TotalFees</th><th>FeesPaid</th><th>Actions</th></tr>`;
+    <th>Name</th><th>Password</th><th>JoiningDate</th>
+    <th>Fees(Total)</th><th>Fees(Paid)</th><th>Fees(Status)</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
   h += `<tr>
@@ -164,7 +164,6 @@ function del(i) {
   renderTeacher();
 }
 
-
 function publishAll(){
   const encoded = encodeJSON(JSON.stringify(teacherData.students));
   const blob = new Blob([JSON.stringify(encoded)],{type:"application/json"});
@@ -204,6 +203,7 @@ function download(blob,name){
 
 </body>
 </html>
+
 
 
 
