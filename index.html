@@ -172,17 +172,14 @@ function saveTeacherData(){
   localStorage.setItem("teacherData",JSON.stringify(teacherData));
 }
 
-/* ------------------ STUDENT FUNCTIONS ------------------ */
 function renderStudent(){
   const studentFile = authData.students[loggedStudent].file;
   fetch(studentFile)
-  .then(r => r.json())
-  .then(encodedArray => {
-    const jsonStr = decodeJSON(encodedArray);   // decode to string
-    const s = JSON.parse(jsonStr);             // parse JSON
-    // Now display s.name, s.attendance, etc.
-  });
-
+    .then(r => r.json())
+    .then(encodedArray => {
+      const jsonStr = decodeJSON(encodedArray);   // decode to string
+      const s = JSON.parse(jsonStr);             // parse JSON
+      // Now display s.name, s.attendance, etc.
       document.getElementById("studentTable").innerHTML = `
         <tr><th>Name</th><td>${s.name}</td></tr>
         <tr><th>Attendance</th><td>${s.attendance}</td></tr>
@@ -197,6 +194,7 @@ function renderStudent(){
 
 </body>
 </html>
+
 
 
 
