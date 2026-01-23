@@ -27,61 +27,41 @@
   <button onclick="login()">Login</button>
 </div>
 
-<!-- TEACHER DASHBOARD -->
 <div class="box hidden" id="teacherBox">
   <h3>Teacher Dashboard</h3>
-
   <button onclick="addStudent()">Add Student</button>
-
+  <button onclick="publishAll()">Publish All Students</button>
   <table id="teacherTable"></table>
 </div>
 
-<!-- STUDENT DASHBOARD -->
 <div class="box hidden" id="studentBox">
   <h3>Student Dashboard</h3>
   <table id="studentTable"></table>
 </div>
 
 <script>
-let authData = null;
-
-// Fetch the auth file
-fetch("auth.json")
-  .then(r => r.json())
-  .then(d => { authData = d; })
-  .catch(() => alert("auth.json not found or failed to load"));
 const ENCODE_KEY = 5;        // key added to ASCII of each char
-const ENCODE_MULTIPLIER = 3; // multiplier for the ASCII+key
+const ENCODE_MULTIPLIER = 3; // multiplier for ASCII+key
 
-// Encode a JSON string into a list of numbers
-function encodeJSON(jsonString) {
-  return Array.from(jsonString).map(c => (c.charCodeAt(0) + ENCODE_KEY) * ENCODE_MULTIPLIER);
-}
-
-// Decode the list of numbers back into JSON string
-function decodeJSON(encodedArray) {
-  return encodedArray
-    .map(n => String.fromCharCode((n / ENCODE_MULTIPLIER) - ENCODE_KEY))
-    .join('');
-}
-
-
-/* ------------------ LOCAL TEACHER DATA ------------------ */
-let teacherData = JSON.parse(localStorage.getItem("teacherData")) || {
-  students: []
-};
-
+let authData = null;
+let teacherData = JSON.parse(localStorage.getItem("teacherData")) || { students: [] };
 let loggedStudent = null;
 
-/* ------------------ LOGIN ------------------ */
-function login() {
-  if (!authData) {
-    alert("Authentication data is not loaded yet. Try again in a moment.");
-    return;
-  }
+// Load auth.json
+fetch("auth.json")
+  .then(r => r.json())
+  .then(d => authData = d)
+  .catch(() => alert("auth.json not found"));
 
+// Encoding / Decoding functions
+function encodeJSON(str){ return Array.from(str).map(c=>(c.charCodeAt(0)+ENCODE_KEY)*ENCODE_MULTIPLIER); }
+function decodeJSON(arr){ return arr.map(n=>String.fromCharCode((n/ENCODE_MULTIPLIER)-ENCODE_KEY)).join(''); }
+
+/* ---------- LOGIN ---------- */
+function login(){
+  if(!authData){ alert("Auth data not loaded yet."); return; }
   const pwd = document.getElementById("password").value;
-
+  
   if(pwd === authData.teacher){
     document.getElementById("loginBox").classList.add("hidden");
     document.getElementById("teacherBox").classList.remove("hidden");
@@ -102,84 +82,59 @@ function login() {
   alert("Invalid password");
 }
 
-/* ------------------ TEACHER FUNCTIONS ------------------ */
+/* ---------- TEACHER FUNCTIONS ---------- */
 function addStudent(){
-  const name = prompt("Enter student name:");
+  const name = prompt("Student name:");
   if(!name) return;
-  const file = prompt("Enter student data filename (e.g., student_"+name+".json):");
-  if(!file) return;
+  const file = name + ".json"; // file placeholder, all in one publish now
 
-  teacherData.students.push({
-    name:name,
-    file:file,
-    attendance:0,
-    fees:0,
-    paid:false
-  });
-
+  teacherData.students.push({ name, file, attendance:0, fees:0, paid:false });
   saveTeacherData();
   renderTeacher();
 }
 
-function renderTeacher(){
-  let html = `<tr>
-      <th>Name</th><th>Data File</th><th>Attendance</th><th>Fees</th><th>Status</th><th>Actions</th>
-    </tr>`;
+function markAttendance(i){ teacherData.students[i].attendance++; saveTeacherData(); renderTeacher(); }
+function toggleFees(i){ teacherData.students[i].paid=!teacherData.students[i].paid; saveTeacherData(); renderTeacher(); }
 
+function renderTeacher(){
+  let html = `<tr><th>Name</th><th>Attendance</th><th>Fees</th><th>Status</th><th>Actions</th></tr>`;
   teacherData.students.forEach((s,i)=>{
     html+=`<tr>
       <td>${s.name}</td>
-      <td>${s.file}</td>
       <td>${s.attendance}</td>
       <td>₹${s.fees}</td>
       <td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td>
       <td>
         <button onclick="markAttendance(${i})">+1 Attendance</button>
         <button onclick="toggleFees(${i})">Toggle Fees</button>
-        <button onclick="publishStudent(${i})">Publish</button>
       </td>
     </tr>`;
   });
-
   document.getElementById("teacherTable").innerHTML = html;
 }
 
-function markAttendance(i){
-  teacherData.students[i].attendance++;
-  saveTeacherData();
-  renderTeacher();
-}
-
-function toggleFees(i){
-  teacherData.students[i].paid = !teacherData.students[i].paid;
-  saveTeacherData();
-  renderTeacher();
-}
-
-function publishStudent(i){
-  const s = teacherData.students[i];
-  const jsonStr = JSON.stringify(s, null, 2);
-  const encoded = encodeJSON(jsonStr); // array of numbers
-  const blob = new Blob([JSON.stringify(s,null,2)],{type:"application/json"});
+function publishAll(){
+  const jsonStr = JSON.stringify(teacherData.students, null, 2);
+  const encoded = encodeJSON(jsonStr);
+  const blob = new Blob([JSON.stringify(encoded)], { type:"application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = s.file;
+  a.download = "students.json";
   a.click();
-  alert("Download the file and place in /data folder for student access");
+  alert("All students published! Save the file in repo for student access.");
 }
 
-function saveTeacherData(){
-  localStorage.setItem("teacherData",JSON.stringify(teacherData));
-}
+function saveTeacherData(){ localStorage.setItem("teacherData", JSON.stringify(teacherData)); }
 
+/* ---------- STUDENT FUNCTIONS ---------- */
 function renderStudent(){
-  const studentFile = authData.students[loggedStudent].file;
-  fetch(studentFile)
-    .then(r => r.json())
-    .then(encodedArray => {
-      const jsonStr = decodeJSON(encodedArray);   // decode to string
-      const s = JSON.parse(jsonStr);             // parse JSON
-      // Now display s.name, s.attendance, etc.
+  fetch("students.json")
+    .then(r=>r.json())
+    .then(encodedArr=>{
+      const jsonStr = decodeJSON(encodedArr);
+      const students = JSON.parse(jsonStr);
+      const s = students.find(x=>x.name === loggedStudent);
+      if(!s){ document.getElementById("studentTable").innerHTML="Data not available"; return; }
       document.getElementById("studentTable").innerHTML = `
         <tr><th>Name</th><td>${s.name}</td></tr>
         <tr><th>Attendance</th><td>${s.attendance}</td></tr>
@@ -187,15 +142,9 @@ function renderStudent(){
         <tr><th>Status</th><td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td></tr>
       `;
     })
-    .catch(()=> document.getElementById("studentTable").innerHTML = "Teacher has not published your data yet");
+    .catch(()=> document.getElementById("studentTable").innerHTML="Teacher has not published your data yet");
 }
-
 </script>
 
 </body>
 </html>
-
-
-
-
-
