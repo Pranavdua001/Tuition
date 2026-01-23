@@ -144,7 +144,7 @@ function att(i){
 
   s.monthlyfeespaid += add;
 
-  saveTeacherData();
+  save();
   renderTeacher();
 }
 function fee(i){ teacherData.students[i].paid=!teacherData.students[i].paid; save(); renderTeacher(); }
@@ -188,6 +188,7 @@ function download(blob,name){
 
 </body>
 </html>
+
 
 
 
