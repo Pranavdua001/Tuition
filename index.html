@@ -154,7 +154,7 @@ function saveTeacherData(){
 /* ------------------ STUDENT FUNCTIONS ------------------ */
 function renderStudent(){
   const studentFile = authData.students[loggedStudent].file;
-  fetch("data/"+studentFile)
+  fetch(studentFile)
     .then(r=>r.json())
     .then(s=>{
       document.getElementById("studentTable").innerHTML = `
@@ -170,3 +170,4 @@ function renderStudent(){
 
 </body>
 </html>
+
