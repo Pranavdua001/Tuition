@@ -82,13 +82,15 @@ function login(){
 function addStudent(){
   const name = prompt("Student name:");
   const password = prompt("Student password:");
-  if(!name || !password) return;
+  const joiningdate = prompt("Student Joining date:");
+  const fees = prompt("Student fees");
+  if(!name || !password || !joiningdate || !fees) return;
 
   teacherData.students.push({
     name,
     password,
-    joiningdate:0,
-    fees:0,
+    joiningdate,
+    fees,
     paid:false
   });
 
@@ -158,4 +160,5 @@ function download(blob,name){
 
 </body>
 </html>
+
 
