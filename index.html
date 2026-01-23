@@ -1,228 +1,107 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Offline Tuition App</title>
-
-<style>
-:root{
-  --bg:#eef2f7;
-  --card:#ffffff;
-  --primary:#2563eb;
-  --secondary:#64748b;
-  --success:#16a34a;
-  --danger:#dc2626;
-  --radius:14px;
-}
-
-*{ box-sizing:border-box }
-
-body{
-  margin:0;
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
-  background:var(--bg);
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  padding:30px;
-}
-
-.app{
-  width:100%;
-  max-width:520px;
-}
-
-.card{
-  background:var(--card);
-  border-radius:var(--radius);
-  padding:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
-  margin-bottom:20px;
-}
-
-h2{
-  margin:0 0 15px;
-  font-size:22px;
-  color:#0f172a;
-}
-
-h3{
-  margin:20px 0 10px;
-  font-size:16px;
-  color:var(--secondary);
-}
-
-label{
-  font-size:13px;
-  color:#475569;
-}
-
-input, textarea{
-  width:100%;
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid #cbd5e1;
-  font-size:14px;
-  margin-top:6px;
-  margin-bottom:12px;
-}
-
-textarea{
-  resize:vertical;
-  min-height:80px;
-}
-
-input:focus, textarea:focus{
-  outline:none;
-  border-color:var(--primary);
-}
-
-button{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:var(--primary);
-  color:white;
-  font-size:15px;
-  font-weight:600;
-  cursor:pointer;
-  transition:.2s;
-}
-
-button:hover{
-  background:#1d4ed8;
-}
-
-.badge{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:12px;
-  background:#e0e7ff;
-  color:#1e3a8a;
-}
-
-pre{
-  background:#f8fafc;
-  border-radius:10px;
-  padding:12px;
-  font-size:13px;
-  overflow:auto;
-  white-space:pre-wrap;
-  border:1px solid #e2e8f0;
-}
-
-.footer-note{
-  text-align:center;
-  font-size:12px;
-  color:#64748b;
-  margin-top:10px;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Offline Tuition App</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="app">
+<h2>Tuition Login</h2>
+<input id="password" placeholder="Enter password">
+<button onclick="login()">Login</button>
 
-  <!-- LOGIN -->
-  <div class="card">
-    <h2>🎓 Tuition Portal</h2>
-    <label>Password</label>
-    <input id="password" placeholder="Enter your password">
-    <button onclick="login()">Login</button>
-  </div>
+<div id="teacher" class="box" style="display:none">
+  <h2>Teacher Dashboard</h2>
 
-  <!-- TEACHER DASHBOARD -->
-  <div id="teacher" class="card" style="display:none">
-    <h2>👩‍🏫 Teacher Dashboard <span class="badge">Admin</span></h2>
+  <h3>Add Student</h3>
+  <input id="sname" placeholder="Student Name">
+  <input id="spass" placeholder="Student Password">
+  <button onclick="addStudent()">Add Student</button>
 
-    <h3>Add Student</h3>
-    <input id="sname" placeholder="Student Name">
-    <input id="spass" placeholder="Student Password">
-    <button onclick="addStudent()">Add Student</button>
+  <h3>Attach Data to Student</h3>
+  <input id="datapass" placeholder="Student Password">
+  <textarea id="sdata" placeholder="Enter data"></textarea>
+  <button onclick="attachData()">Save Data</button>
 
-    <h3>Attach Data</h3>
-    <input id="datapass" placeholder="Student Password">
-    <textarea id="sdata" placeholder="Notes / Homework / Announcements"></textarea>
-    <button onclick="attachData()">Save Data</button>
+  <h3>All Students</h3>
+  <pre id="studentList"></pre>
+</div>
 
-    <h3>Students Overview</h3>
-    <pre id="studentList"></pre>
-  </div>
-
-  <!-- STUDENT DASHBOARD -->
-  <div id="student" class="card" style="display:none">
-    <h2>📘 Student Dashboard</h2>
-    <pre id="studentData"></pre>
-  </div>
-
-  <div class="footer-note">
-    Offline • Static • GitHub Pages Compatible
-  </div>
-
+<div id="student" class="box" style="display:none">
+  <h2>Student Dashboard</h2>
+  <pre id="studentData"></pre>
 </div>
 
 <script>
 const KEY = 7;
 const MUL = 3;
 
+/* ---------- ENCODE / DECODE ---------- */
 function encode(text){
   return text.split('').map(c => (c.charCodeAt(0)+KEY)*MUL).join('.');
 }
 function decode(text){
-  return text.split('.').map(n =>
+  return text.split('.').map(n => 
     String.fromCharCode((n/MUL)-KEY)
   ).join('');
 }
 
+/* ---------- INIT ---------- */
 if(!localStorage.teacher){
   localStorage.teacher = encode("1234");
   localStorage.students = encode(JSON.stringify({}));
 }
 
+/* ---------- LOGIN ---------- */
 function login(){
-  const pass = password.value;
+  const pass = document.getElementById("password").value;
   const students = JSON.parse(decode(localStorage.students));
 
   if(encode(pass) === localStorage.teacher){
-    teacher.style.display="block";
+    document.getElementById("teacher").style.display="block";
     loadStudents();
     return;
   }
 
   if(students[pass]){
-    student.style.display="block";
-    studentData.innerText =
-      students[pass].data?.join("\n") || "No data published yet.";
+    document.getElementById("student").style.display="block";
+    document.getElementById("studentData").innerText =
+      students[pass].data?.join("\n") || "No data published";
     return;
   }
 
   alert("Invalid password");
 }
 
+/* ---------- TEACHER FUNCTIONS ---------- */
 function addStudent(){
+  const name = sname.value;
+  const pass = spass.value;
   const students = JSON.parse(decode(localStorage.students));
-  students[spass.value] = { name:sname.value, data:[] };
+
+  students[pass] = { name:name, data:[] };
   localStorage.students = encode(JSON.stringify(students));
   loadStudents();
 }
 
 function attachData(){
+  const pass = datapass.value;
+  const data = sdata.value;
   const students = JSON.parse(decode(localStorage.students));
-  if(!students[datapass.value]) return alert("Student not found");
-  students[datapass.value].data.push(sdata.value);
+
+  if(!students[pass]){ alert("Student not found"); return; }
+
+  students[pass].data.push(data);
   localStorage.students = encode(JSON.stringify(students));
   loadStudents();
 }
 
 function loadStudents(){
   const students = JSON.parse(decode(localStorage.students));
-  let out="";
+  let out = "";
   for(let p in students){
-    out += `Name: ${students[p].name}\nPassword: ${p}\nEntries: ${students[p].data.length}\n\n`;
+    out += `Name: ${students[p].name}\nPassword: ${p}\nData count: ${students[p].data.length}\n\n`;
   }
   studentList.innerText = out;
 }
