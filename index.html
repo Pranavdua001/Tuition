@@ -91,7 +91,8 @@ function addStudent(){
     password,
     joiningdate,
     monthlyfees: fees,
-    monthlyfeespaid: 0
+    monthlyfeespaid: 0,
+    monthlyfeesremaining: (s.monthlyfees - s.monthlyfeespaid)
   });
 
   save(); renderTeacher();
@@ -100,7 +101,7 @@ function addStudent(){
 function renderTeacher(){
   let h = `<tr>
     <th>Name</th><th>Password</th><th>JoiningDate</th>
-    <th>Fees(Total)</th><th>Fees(Paid)</th><th>Fees(Status)</th></tr>`;
+    <th>Fees(Total)</th><th>Fees(Paid)</th><th>Fees(Remaining)</th><th>Fees(Status)</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
   h += `<tr>
@@ -109,6 +110,7 @@ function renderTeacher(){
     <td>${s.joiningdate}</td>
     <td>₹${s.monthlyfees}</td>
     <td>₹${s.monthlyfeespaid}</td>
+    <td>₹${s.monthlyfeesremaining}</td>
     <td class="${(s.monthlyfees - s.monthlyfeespaid) === 0 ? 'paid' : 'unpaid'}">
       ${(s.monthlyfees - s.monthlyfeespaid) === 0 ? 'Paid' : 'Unpaid'}
     </td>
@@ -203,6 +205,7 @@ function download(blob,name){
 
 </body>
 </html>
+
 
 
 
