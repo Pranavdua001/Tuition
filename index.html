@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Offline Tuition App - Complete</title>
+<title>Offline Tuition App - Complete with History</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{font-family:Arial, sans-serif;background:#f4f6f8;margin:0;padding:20px;}
@@ -43,6 +43,8 @@ textarea{resize:none;}
 <div class="box hidden" id="studentBox">
   <h2>Student Dashboard</h2>
   <table id="studentTable"></table>
+  <h3>Payment History</h3>
+  <table id="studentHistoryTable"></table>
 </div>
 
 <script>
@@ -99,6 +101,7 @@ function addStudent(){
     monthlyfeespaid: 0,
     lastFeeCycle: 0,
     history: [],
+    attendance: 0
   });
 
   updateFeeCycles();
@@ -109,7 +112,7 @@ function addStudent(){
 function renderTeacher(){
   let html = `<tr>
     <th>Name</th><th>Password</th><th>Joining Date</th>
-    <th>Monthly Fees</th><th>Fees Paid</th><th>Fees Status</th><th>Actions</th></tr>`;
+    <th>Monthly Fees</th><th>Fees Paid</th><th>Status</th><th>Attendance</th><th>Actions</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
     html += `<tr>
@@ -119,8 +122,11 @@ function renderTeacher(){
       <td>₹${s.monthlyfees}</td>
       <td>₹${s.monthlyfeespaid}</td>
       <td class="${s.monthlyfeespaid >= s.monthlyfees ? 'paid':'unpaid'}">${s.monthlyfeespaid >= s.monthlyfees ? 'Paid':'Unpaid'}</td>
+      <td>${s.attendance}</td>
       <td>
-        <button onclick="editFees(${i})">Edit Fees Paid</button>
+        <button onclick="editFees(${i})">Edit Fees</button>
+        <button onclick="viewHistory(${i})">History</button>
+        <button onclick="markAttendance(${i})">+1 Attendance</button>
         <button onclick="delStudent(${i})">Delete</button>
       </td>
     </tr>`;
@@ -143,6 +149,15 @@ function editFees(i){
   s.history.push({date: new Date().toISOString().split("T")[0], paid: add});
   save();
   renderTeacher();
+}
+
+/* ----------- VIEW HISTORY ----------- */
+function viewHistory(i){
+  const s = teacherData.students[i];
+  if(s.history.length===0){ alert("No payments yet."); return; }
+  let h = `Payment History for ${s.name}:\n\n`;
+  s.history.forEach((p,j)=>{ h += `${j+1}. ${p.date} - ₹${p.paid}\n`; });
+  alert(h);
 }
 
 /* ----------- DELETE STUDENT ----------- */
@@ -175,7 +190,7 @@ function renderStudent(){
       const s = students.find(x=>x.name===loggedStudent);
       if(!s) throw 0;
 
-      // Compute dynamic fees status based on month cycles
+      // Update fee cycles based on joining date
       const today = new Date();
       const joining = new Date(s.joiningdate);
       let monthsPassed = (today.getFullYear() - joining.getFullYear())*12 + (today.getMonth() - joining.getMonth());
@@ -191,7 +206,20 @@ function renderStudent(){
         <tr><th>Monthly Fees</th><td>₹${s.monthlyfees}</td></tr>
         <tr><th>Fees Paid</th><td>₹${s.monthlyfeespaid}</td></tr>
         <tr><th>Status</th><td class="${s.monthlyfeespaid>=s.monthlyfees?'paid':'unpaid'}">${s.monthlyfeespaid>=s.monthlyfees?'Paid':'Unpaid'}</td></tr>
+        <tr><th>Attendance</th><td>${s.attendance}</td></tr>
       `;
+
+      // Display history
+      let historyHTML = `<tr><th>#</th><th>Date</th><th>Amount Paid</th></tr>`;
+      if(s.history.length===0){
+        historyHTML += `<tr><td colspan="3">No payments yet</td></tr>`;
+      } else {
+        s.history.forEach((p,j)=>{
+          historyHTML += `<tr><td>${j+1}</td><td>${p.date}</td><td>₹${p.paid}</td></tr>`;
+        });
+      }
+      document.getElementById("studentHistoryTable").innerHTML = historyHTML;
+
     })
     .catch(()=> document.getElementById("studentTable").innerHTML="No data published yet");
 }
@@ -220,5 +248,3 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 
 </body>
 </html>
-
-
