@@ -43,6 +43,13 @@
 </div>
 
 <script>
+let authData = null;
+
+// Fetch the auth file
+fetch("auth.json")
+  .then(r => r.json())
+  .then(d => { authData = d; })
+  .catch(() => alert("auth.json not found or failed to load"));
 const ENCODE_KEY = 5;        // key added to ASCII of each char
 const ENCODE_MULTIPLIER = 3; // multiplier for the ASCII+key
 
@@ -180,9 +187,38 @@ function renderStudent(){
     })
     .catch(()=> document.getElementById("studentTable").innerHTML = "Teacher has not published your data yet");
 }
+function login() {
+  if (!authData) {
+    alert("Authentication data is not loaded yet. Try again in a moment.");
+    return;
+  }
+
+  const pwd = document.getElementById("password").value;
+
+  if(pwd === authData.teacher){
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("teacherBox").classList.remove("hidden");
+    renderTeacher();
+    return;
+  }
+
+  for(let s in authData.students){
+    if(pwd === authData.students[s].password){
+      loggedStudent = s;
+      document.getElementById("loginBox").classList.add("hidden");
+      document.getElementById("studentBox").classList.remove("hidden");
+      renderStudent();
+      return;
+    }
+  }
+
+  alert("Invalid password");
+}
+
 </script>
 
 </body>
 </html>
+
 
 
