@@ -94,8 +94,7 @@ function addStudent(){
     monthlyfees: monthlyfees,
     monthlyfeespaid: 0,
     lastFeeCycle: 0,
-    history: [],
-    attendance: 0
+    history: []
   });
 
   updateFeeCycles();
@@ -106,7 +105,7 @@ function addStudent(){
 function renderTeacher(){
   let html = `<tr>
     <th>Name</th><th>Password</th><th>Joining Date</th>
-    <th>Monthly Fees</th><th>Fees Paid</th><th>Status</th><th>Attendance</th><th>Actions</th></tr>`;
+    <th>Monthly Fees</th><th>Fees Paid</th><th>Status</th><th>Actions</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
     if(!s.history) s.history = []; // ensure history exists
@@ -117,11 +116,9 @@ function renderTeacher(){
       <td>₹${s.monthlyfees}</td>
       <td>₹${s.monthlyfeespaid}</td>
       <td class="${s.monthlyfeespaid >= s.monthlyfees ? 'paid':'unpaid'}">${s.monthlyfeespaid >= s.monthlyfees ? 'Paid':'Unpaid'}</td>
-      <td>${s.attendance}</td>
       <td>
         <button onclick="editFees(${i})">Edit Fees</button>
         <button onclick="viewHistory(${i})">History</button>
-        <button onclick="markAttendance(${i})">+1 Attendance</button>
         <button onclick="delStudent(${i})">Delete</button>
       </td>
     </tr>`;
@@ -205,7 +202,6 @@ function renderStudent(){
         <tr><th>Monthly Fees</th><td>₹${s.monthlyfees}</td></tr>
         <tr><th>Fees Paid</th><td>₹${s.monthlyfeespaid}</td></tr>
         <tr><th>Status</th><td class="${s.monthlyfeespaid>=s.monthlyfees?'paid':'unpaid'}">${s.monthlyfeespaid>=s.monthlyfees?'Paid':'Unpaid'}</td></tr>
-        <tr><th>Attendance</th><td>${s.attendance}</td></tr>
       `;
 
       // Payment history table
@@ -244,14 +240,7 @@ function save(){ localStorage.setItem("teacherData",JSON.stringify(teacherData))
 function hide(id){document.getElementById(id).classList.add("hidden")}
 function show(id){document.getElementById(id).classList.remove("hidden")}
 
-// Optional: mark attendance
-function markAttendance(i){ 
-  const s = teacherData.students[i]; 
-  if(!s) return; 
-  s.attendance = (s.attendance||0)+1; 
-  save(); 
-  renderTeacher(); 
-}
 </script>
 </body>
 </html>
+
