@@ -83,14 +83,14 @@ function addStudent(){
   const name = prompt("Student name:");
   const password = prompt("Student password:");
   const joiningdate = prompt("Student Joining date:");
-  const feestobepaid = prompt("Student feestobepaid");
-  if(!name || !password || !joiningdate || !feestobepaid) return;
+  const monthlyfees = prompt("Student monthlyfees");
+  if(!name || !password || !joiningdate || !monthlyfees) return;
 
   teacherData.students.push({
     name,
     password,
     joiningdate,
-    feestobepaid,
+    monthlyfees,
     paid:false
   });
 
@@ -100,25 +100,53 @@ function addStudent(){
 function renderTeacher(){
   let h = `<tr>
     <th>Name</th><th>Password</th><th>joiningdate</th>
-    <th>feestobepaid</th><th>Status</th><th>Actions</th></tr>`;
+    <th>monthlyfees</th><th>Status</th><th>Actions</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
-    h+=`<tr>
-      <td>${s.name}</td>
-      <td>${s.password}</td>
-      <td>${s.joiningdate}</td>
-      <td>₹${s.feestobepaid}</td>
-      <td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td>
-      <td>
-        <button onclick="att(${i})"></button>
-        <button onclick="fee(${i})">Toggle Fee</button>
-      </td>
-    </tr>`;
-  });
+  h += `<tr>
+    <td>${s.name}</td>
+    <td>${s.password}</td>
+    <td>${s.joiningdate}</td>
+    <td>₹${s.monthlyfees}</td>
+    <td>₹${s.monthlyfeespaid}</td>
+    <td class="${(s.monthlyfees - s.monthlyfeespaid) === 0 ? 'paid' : 'unpaid'}">
+      ${(s.monthlyfees - s.monthlyfeespaid) === 0 ? 'Paid' : 'Unpaid'}
+    </td>
+    <td>
+      <button onclick="att(${i})">Edit Fees Paid</button>
+    </td>
+  </tr>`;
+});
+
   document.getElementById("teacherTable").innerHTML = h;
 }
 
-function att(i){ teacherData.students[i].joiningdate++; save(); renderTeacher(); }
+function att(i){
+  let s = teacherData.students[i];
+
+  let add = prompt(
+    `Enter amount paid by ${s.name}\nRemaining: ₹${s.monthlyfees - s.monthlyfeespaid}`
+  );
+
+  if(add === null) return;
+
+  add = Number(add);
+
+  if(isNaN(add) || add <= 0){
+    alert("Enter a valid amount");
+    return;
+  }
+
+  if(s.monthlyfeespaid + add > s.monthlyfees){
+    alert("Amount exceeds total monthly fees");
+    return;
+  }
+
+  s.monthlyfeespaid += add;
+
+  saveTeacherData();
+  renderTeacher();
+}
 function fee(i){ teacherData.students[i].paid=!teacherData.students[i].paid; save(); renderTeacher(); }
 
 function publishAll(){
@@ -141,7 +169,7 @@ function renderStudent(){
       document.getElementById("studentTable").innerHTML=`
         <tr><th>Name</th><td>${s.name}</td></tr>
         <tr><th>JoiningDate</th><td>${s.joiningdate}</td></tr>
-        <tr><th>feestobepaid</th><td>₹${s.feestobepaid}</td></tr>
+        <tr><th>monthlyfees</th><td>₹${s.monthlyfees}</td></tr>
         <tr><th>Status</th><td class="${s.paid?'paid':'unpaid'}">${s.paid?'Paid':'Unpaid'}</td></tr>
       `;
     })
@@ -160,6 +188,7 @@ function download(blob,name){
 
 </body>
 </html>
+
 
 
 
