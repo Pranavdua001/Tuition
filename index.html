@@ -5,150 +5,170 @@
 <title>Offline Tuition App</title>
 
 <style>
-* { box-sizing: border-box; }
+:root{
+  --bg:#eef2f7;
+  --card:#ffffff;
+  --primary:#2563eb;
+  --secondary:#64748b;
+  --success:#16a34a;
+  --danger:#dc2626;
+  --radius:14px;
+}
 
-body {
-  margin: 0;
+*{ box-sizing:border-box }
+
+body{
+  margin:0;
   font-family: "Segoe UI", Roboto, Arial, sans-serif;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:30px;
 }
 
-.container {
-  width: 100%;
-  max-width: 420px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-  padding: 25px;
+.app{
+  width:100%;
+  max-width:520px;
 }
 
-h1, h2, h3 {
-  margin: 0 0 10px;
-  color: #333;
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
+  margin-bottom:20px;
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
+h2{
+  margin:0 0 15px;
+  font-size:22px;
+  color:#0f172a;
 }
 
-input, textarea {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  margin-top: 8px;
-  font-size: 14px;
+h3{
+  margin:20px 0 10px;
+  font-size:16px;
+  color:var(--secondary);
 }
 
-textarea { resize: vertical; }
-
-button {
-  width: 100%;
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  background: #667eea;
-  color: white;
-  font-size: 15px;
-  cursor: pointer;
-  transition: 0.2s;
+label{
+  font-size:13px;
+  color:#475569;
 }
 
-button:hover {
-  background: #5a67d8;
+input, textarea{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #cbd5e1;
+  font-size:14px;
+  margin-top:6px;
+  margin-bottom:12px;
 }
 
-.section {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
+textarea{
+  resize:vertical;
+  min-height:80px;
 }
 
-pre {
-  background: #f7f7f7;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 13px;
-  white-space: pre-wrap;
+input:focus, textarea:focus{
+  outline:none;
+  border-color:var(--primary);
 }
 
-.badge {
-  display: inline-block;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: #edf2ff;
-  color: #667eea;
-  font-size: 12px;
-  margin-bottom: 10px;
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:var(--primary);
+  color:white;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.2s;
 }
 
-.hidden { display: none; }
+button:hover{
+  background:#1d4ed8;
+}
 
-.footer {
-  text-align: center;
-  font-size: 12px;
-  color: #999;
-  margin-top: 20px;
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  background:#e0e7ff;
+  color:#1e3a8a;
+}
+
+pre{
+  background:#f8fafc;
+  border-radius:10px;
+  padding:12px;
+  font-size:13px;
+  overflow:auto;
+  white-space:pre-wrap;
+  border:1px solid #e2e8f0;
+}
+
+.footer-note{
+  text-align:center;
+  font-size:12px;
+  color:#64748b;
+  margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="app">
 
   <!-- LOGIN -->
-  <div id="loginBox">
-    <h1>Tuition App</h1>
-    <input id="password" placeholder="Enter password">
+  <div class="card">
+    <h2>🎓 Tuition Portal</h2>
+    <label>Password</label>
+    <input id="password" placeholder="Enter your password">
     <button onclick="login()">Login</button>
   </div>
 
-  <!-- TEACHER -->
-  <div id="teacher" class="hidden">
-    <span class="badge">Teacher Dashboard</span>
+  <!-- TEACHER DASHBOARD -->
+  <div id="teacher" class="card" style="display:none">
+    <h2>👩‍🏫 Teacher Dashboard <span class="badge">Admin</span></h2>
 
-    <div class="section">
-      <h3>Add Student</h3>
-      <input id="sname" placeholder="Student name">
-      <input id="spass" placeholder="Student password">
-      <button onclick="addStudent()">Add Student</button>
-    </div>
+    <h3>Add Student</h3>
+    <input id="sname" placeholder="Student Name">
+    <input id="spass" placeholder="Student Password">
+    <button onclick="addStudent()">Add Student</button>
 
-    <div class="section">
-      <h3>Attach Data</h3>
-      <input id="datapass" placeholder="Student password">
-      <textarea id="sdata" rows="3" placeholder="Enter notes / marks / message"></textarea>
-      <button onclick="attachData()">Save Data</button>
-    </div>
+    <h3>Attach Data</h3>
+    <input id="datapass" placeholder="Student Password">
+    <textarea id="sdata" placeholder="Notes / Homework / Announcements"></textarea>
+    <button onclick="attachData()">Save Data</button>
 
-    <div class="section">
-      <h3>Students Overview</h3>
-      <pre id="studentList"></pre>
-    </div>
+    <h3>Students Overview</h3>
+    <pre id="studentList"></pre>
   </div>
 
-  <!-- STUDENT -->
-  <div id="student" class="hidden">
-    <span class="badge">Student Dashboard</span>
-    <h3>Your Data</h3>
+  <!-- STUDENT DASHBOARD -->
+  <div id="student" class="card" style="display:none">
+    <h2>📘 Student Dashboard</h2>
     <pre id="studentData"></pre>
   </div>
 
-  <div class="footer">Offline • Static • GitHub Pages Ready</div>
+  <div class="footer-note">
+    Offline • Static • GitHub Pages Compatible
+  </div>
+
 </div>
 
 <script>
 const KEY = 7;
 const MUL = 3;
 
-/* ---------- ENCODE / DECODE ---------- */
 function encode(text){
   return text.split('').map(c => (c.charCodeAt(0)+KEY)*MUL).join('.');
 }
@@ -158,47 +178,41 @@ function decode(text){
   ).join('');
 }
 
-/* ---------- INIT ---------- */
 if(!localStorage.teacher){
   localStorage.teacher = encode("1234");
   localStorage.students = encode(JSON.stringify({}));
 }
 
-/* ---------- LOGIN ---------- */
 function login(){
   const pass = password.value;
   const students = JSON.parse(decode(localStorage.students));
 
-  loginBox.classList.add("hidden");
-
   if(encode(pass) === localStorage.teacher){
-    teacher.classList.remove("hidden");
+    teacher.style.display="block";
     loadStudents();
     return;
   }
 
   if(students[pass]){
-    student.classList.remove("hidden");
+    student.style.display="block";
     studentData.innerText =
-      students[pass].data?.join("\n") || "No data published";
+      students[pass].data?.join("\n") || "No data published yet.";
     return;
   }
 
   alert("Invalid password");
-  loginBox.classList.remove("hidden");
 }
 
-/* ---------- TEACHER FUNCTIONS ---------- */
 function addStudent(){
   const students = JSON.parse(decode(localStorage.students));
-  students[spass.value] = { name: sname.value, data: [] };
+  students[spass.value] = { name:sname.value, data:[] };
   localStorage.students = encode(JSON.stringify(students));
   loadStudents();
 }
 
 function attachData(){
   const students = JSON.parse(decode(localStorage.students));
-  if(!students[datapass.value]){ alert("Student not found"); return; }
+  if(!students[datapass.value]) return alert("Student not found");
   students[datapass.value].data.push(sdata.value);
   localStorage.students = encode(JSON.stringify(students));
   loadStudents();
@@ -206,11 +220,11 @@ function attachData(){
 
 function loadStudents(){
   const students = JSON.parse(decode(localStorage.students));
-  let out = "";
+  let out="";
   for(let p in students){
     out += `Name: ${students[p].name}\nPassword: ${p}\nEntries: ${students[p].data.length}\n\n`;
   }
-  studentList.innerText = out || "No students added yet.";
+  studentList.innerText = out;
 }
 </script>
 
