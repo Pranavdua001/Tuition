@@ -183,7 +183,7 @@ function editFees(i){
   if(add === null) return;
   add = Number(add);
   if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
-  if(s.feespaid + add > s.feestobepaid){ alert("Exceeds total fees"); return; }
+  if( add > s.feestobepaid){ alert("Exceeds total fees"); return; }
 
   s.feespaid = add;
   s.feesremaining = s.feestobepaid - s.feespaid;
@@ -310,6 +310,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
