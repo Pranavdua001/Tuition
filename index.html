@@ -272,36 +272,19 @@ function renderStudent(){
       `;
 
       // Payment history table
-      // Payment history table
-let historyHTML = `
-  <tr>
-    <th>#</th>
-    <th>Date</th>
-    <th>Amount to be Paid</th>
-    <th>Amount Paid</th>
-  </tr>
-`;
-
-if(!s.history || s.history.length === 0){
-  historyHTML += `<tr><td colspan="4">No history yet</td></tr>`;
-} else {
-  s.history.forEach((p, j) => {
-    let amountToBePaid = p.type === "fee_due" ? `₹${p.amount}` : '';
-    let amountPaid = p.type === "payment" ? `₹${p.amount}` : '';
-    
-    historyHTML += `
-      <tr>
-        <td>${j+1}</td>
-        <td>${p.date}</td>
-        <td>${amountToBePaid}</td>
-        <td>${amountPaid}</td>
-      </tr>
-    `;
-  });
+      let historyHTML = `<tr><th>#</th><th>Date</th><th>Fees (to be Paid)</th><th>Fees (Paid)</th></tr>`;
+      if(s.history.length===0){
+        historyHTML += `<tr><td colspan="4">No payments yet</td></tr>`;
+      } else {
+        s.history.forEach((p,j)=>{
+          historyHTML += `<tr><td>${j+1}</td><td>${p.date}</td><td>${p.type === "fee_due" ? "₹" + p.amount : ""}</td>
+        <td>${p.type === "payment" ? "₹" + p.amount : ""}</td></tr>`;
+        });
+      }
+      document.getElementById("studentHistoryTable").innerHTML = historyHTML;
+    })
+    .catch(()=> document.getElementById("studentTable").innerHTML="No data published yet");
 }
-
-document.getElementById("studentHistoryTable").innerHTML = historyHTML;
-
 /* ================= FEE CYCLE UPDATE ================= */
 function updateFeeCycles(){
   const today = new Date();
@@ -327,6 +310,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
