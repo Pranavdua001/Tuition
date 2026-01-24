@@ -128,7 +128,7 @@ function addStudent(){
 function renderTeacher(){
   let html = `<tr>
     <th>Name</th><th>Password</th><th>Joining Date</th>
-    <th>Montly Fees</th><th>Fees (to be paid)</th><th>Fees (Paid)</th><th>Fees (Remaining)</th<th>Status</th><th>Actions</th></tr>`;
+    <th>Montly Fees</th><th>Fees (to be paid)</th><th>Fees (Paid)</th><th>Fees (Remaining)</th><th>Status</th><th>Actions</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
     if(!s.history) s.history = []; // ensure history exists
@@ -183,6 +183,7 @@ function editFees(i){
   if(s.feespaid + add > s.feestobepaid){ alert("Exceeds total fees"); return; }
 
   s.feespaid += add;
+  s.feesremaining = s.feestobepaid - s.feespaid;
   s.history.push({date: new Date().toISOString().split("T")[0], paid: add});
   save();
   renderTeacher();
@@ -288,6 +289,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
