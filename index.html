@@ -66,7 +66,7 @@ let loggedStudent = null;
 
 /* ========= DATE / BILLING LOGIC ========= */
 function completedCycles(joinDate){
-  const today = new Date();
+  const today = new Date("2026-01-24");
   const join = new Date(joinDate);
   let m = (today.getFullYear()-join.getFullYear())*12 + (today.getMonth()-join.getMonth());
   if(today.getDate() < join.getDate()) m--;
@@ -203,3 +203,4 @@ function save(){
 
 </body>
 </html>
+
