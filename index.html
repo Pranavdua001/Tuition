@@ -272,18 +272,36 @@ function renderStudent(){
       `;
 
       // Payment history table
-      let historyHTML = `<tr><th>#</th><th>Date</th><th>Amount Paid</th></tr>`;
-      if(s.history.length===0){
-        historyHTML += `<tr><td colspan="3">No payments yet</td></tr>`;
-      } else {
-        s.history.forEach((p,j)=>{
-          historyHTML += `<tr><td>${j+1}</td><td>${p.date}</td><td>₹${p.paid}</td></tr>`;
-        });
-      }
-      document.getElementById("studentHistoryTable").innerHTML = historyHTML;
-    })
-    .catch(()=> document.getElementById("studentTable").innerHTML="No data published yet");
+      let historyHTML = `
+  <tr>
+    <th>#</th>
+    <th>Date</th>
+    <th>Details</th>
+    <th>Amount</th>
+  </tr>
+`;
+
+if(s.history.length === 0){
+  historyHTML += `<tr><td colspan="4">No history yet</td></tr>`;
+} else {
+  s.history.forEach((p, j) => {
+
+    let label = p.type === "payment"
+      ? "Fees (paid)"
+      : "Fees (to be paid)";
+
+    historyHTML += `
+      <tr>
+        <td>${j+1}</td>
+        <td>${p.date}</td>
+        <td>${label}</td>
+        <td>₹${p.amount}</td>
+      </tr>
+    `;
+  });
 }
+
+document.getElementById("studentHistoryTable").innerHTML = historyHTML;
 
 /* ================= FEE CYCLE UPDATE ================= */
 function updateFeeCycles(){
@@ -310,6 +328,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
