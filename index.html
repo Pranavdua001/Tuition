@@ -167,7 +167,7 @@ function editfeestobepaid(i){
   s.feestobepaid = add;
 s.history.push({
   date: new Date().toISOString().split("T")[0],
-  type: "feestobepaid",
+  type: "fee_due",
   amount: add
 });  save();
   renderTeacher();
@@ -189,7 +189,7 @@ function editFees(i){
   s.feesremaining = s.feestobepaid - s.feespaid;
 s.history.push({
   date: new Date().toISOString().split("T")[0],
-  type: "feespaid",
+  type: "payment",
   amount: add
 });  save();
   renderTeacher();
@@ -198,12 +198,27 @@ s.history.push({
 /* ----------- VIEW HISTORY ----------- */
 function viewHistory(i){
   const s = teacherData.students[i];
-  if(!s) { alert("Student not found"); return; }
-  if(!s.history || s.history.length===0){ alert("No payments yet."); return; }
-  let h = `Payment History for ${s.name}:\n\n`;
-  s.history.forEach((p,j)=>{ h += `${j+1}. ${p.date} - ₹${p.paid}\n`; });
+  if(!s){ alert("Student not found"); return; }
+  if(!s.history || s.history.length === 0){
+    alert("No history available.");
+    return;
+  }
+
+  let h = `History for ${s.name}:\n\n`;
+
+  s.history.forEach((p, j) => {
+    let text = "";
+
+    if(p.type === "fee_due") text = "Fees (to be paid)";
+    else if(p.type === "payment") text = "Fees (paid)";
+    else return; // ignore other types if any
+
+    h += `${j+1}. ${p.date} - ₹${p.amount} - ${text}\n`;
+  });
+
   alert(h);
 }
+
 
 /* ----------- DELETE STUDENT ----------- */
 function delStudent(i){
@@ -295,6 +310,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
