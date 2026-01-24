@@ -106,14 +106,16 @@ function addStudent(){
   const name = prompt("Enter student name:"); if(!name) return;
   const password = prompt("Enter student password:"); if(!password) return;
   const joiningdate = prompt("Enter joining date (YYYY-MM-DD):"); if(!joiningdate) return;
-  const feestobepaid = Number(prompt("Enter monthly fees:")); if(isNaN(feestobepaid)) return;
+  const monthlyfees = Number(prompt("Enter monthly fees:")); if(isNaN(monthlyfees)) return;
 
   teacherData.students.push({
     name: name,
     password: password,
     joiningdate: joiningdate,
-    feestobepaid: feestobepaid,
-    monthlyfeespaid: 0,
+    monthlyfees: monthlyfees,
+    feestobepaid: 0,
+    feespaid: 0,
+    remaining: 0,
     lastFeeCycle: 0,
     history: []
   });
@@ -126,7 +128,7 @@ function addStudent(){
 function renderTeacher(){
   let html = `<tr>
     <th>Name</th><th>Password</th><th>Joining Date</th>
-    <th>Fees (to be paid)</th><th>Fees Paid</th><th>Status</th><th>Actions</th></tr>`;
+    <th>Montly Fees</th><th>Fees (to be paid)</th><th>Fees (Paid)</th><th>Fees (Remaining)</th<th>Status</th><th>Actions</th></tr>`;
 
   teacherData.students.forEach((s,i)=>{
     if(!s.history) s.history = []; // ensure history exists
@@ -134,11 +136,14 @@ function renderTeacher(){
       <td>${s.name}</td>
       <td>${s.password}</td>
       <td>${s.joiningdate}</td>
+      <td>₹${s.monthlyfees}</td>
       <td>₹${s.feestobepaid}</td>
-      <td>₹${s.monthlyfeespaid}</td>
-      <td class="${s.monthlyfeespaid >= s.feestobepaid ? 'paid':'unpaid'}">${s.monthlyfeespaid >= s.feestobepaid ? 'Paid':'Unpaid'}</td>
+      <td>₹${s.feespaid}</td>
+      <td>₹${s.feesremaining}</td>
+      <td class="${s.feespaid >= s.feestobepaid ? 'paid':'unpaid'}">${s.feespaid >= s.feestobepaid ? 'Paid':'Unpaid'}</td>
       <td>
-        <button onclick="editFees(${i})">Edit Fees</button>
+        <button onclick="editfeestobepaid(${i})">Edit Fees ( to be paid )</button>
+        <button onclick="editFees(${i})">Edit Fees Paid</button>
         <button onclick="viewHistory(${i})">History</button>
         <button onclick="delStudent(${i})">Delete</button>
       </td>
@@ -153,14 +158,14 @@ function editFees(i){
   const s = teacherData.students[i];
   if(!s) return;
   if(!s.history) s.history = [];
-  const remaining = s.feestobepaid - s.monthlyfeespaid;
+  const remaining = s.feestobepaid - s.feespaid;
   let add = prompt(`Enter amount paid by ${s.name} (Remaining: ₹${remaining})`);
   if(add === null) return;
   add = Number(add);
   if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
-  if(s.monthlyfeespaid + add > s.feestobepaid){ alert("Exceeds total fees"); return; }
+  if(s.feespaid + add > s.feestobepaid){ alert("Exceeds total fees"); return; }
 
-  s.monthlyfeespaid += add;
+  s.feespaid += add;
   s.history.push({date: new Date().toISOString().split("T")[0], paid: add});
   save();
   renderTeacher();
@@ -213,15 +218,17 @@ function renderStudent(){
       let monthsPassed = (today.getFullYear() - joining.getFullYear())*12 + (today.getMonth() - joining.getMonth());
       if(today.getDate() < joining.getDate()) monthsPassed--;
       if(monthsPassed > (s.lastFeeCycle||0)){
-        s.monthlyfeespaid = 0;
+        s.feespaid = 0;
         s.lastFeeCycle = monthsPassed;
       }
 
       document.getElementById("studentTable").innerHTML = `
         <tr><th>Name</th><td>${s.name}</td></tr>
         <tr><th>Joining Date</th><td>${s.joiningdate}</td></tr>
-        <tr><th>Monthly Fees</th><td>₹${s.feestobepaid}</td></tr>
-        <tr><th>Fees Paid</th><td>₹${s.monthlyfeespaid}</td></tr>
+        <tr><th>Monthly Fees</th><td>₹${s.monthlyfees}</td></tr>
+        <tr><th>Fees Paid</th><td>₹${s.feestobepaid}</td></tr>
+        <tr><th>Fees Paid</th><td>₹${s.feespaid}</td></tr>
+        <tr><th>Fees Paid</th><td>₹${s.feesremaining}</td></tr>
         <tr><th>Status</th><td class="${s.monthlyfeespaid>=s.feestobepaid?'paid':'unpaid'}">${s.monthlyfeespaid>=s.feestobepaid?'Paid':'Unpaid'}</td></tr>
       `;
 
@@ -248,7 +255,7 @@ function updateFeeCycles(){
     let monthsPassed = (today.getFullYear() - joining.getFullYear())*12 + (today.getMonth() - joining.getMonth());
     if(today.getDate() < joining.getDate()) monthsPassed--;
     if(monthsPassed > (s.lastFeeCycle||0)){
-      s.monthlyfeespaid = 0;
+      s.feespaid = 0;
       s.lastFeeCycle = monthsPassed;
     }
   });
@@ -264,4 +271,5 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
