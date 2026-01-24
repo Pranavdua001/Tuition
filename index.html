@@ -162,8 +162,8 @@ function editfeestobepaid(i){
   let add = prompt(`Enter amount to be paid by ${s.name} (MonthlyFees: ₹${monthlyfees})`);
   if(add === null) return;
   add = Number(add);
-  if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
-
+  if(isNaN(add) || add<s.monthlyfees){ alert("Enter valid amount"); return;}
+  if(add===s.monthlyfees+s.feesremaining){s.feespaid=0}
   s.feestobepaid = add;
 s.history.push({
   date: new Date().toISOString().split("T")[0],
@@ -183,9 +183,9 @@ function editFees(i){
   if(add === null) return;
   add = Number(add);
   if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
-  if( add > s.feestobepaid){ alert("Exceeds total fees"); return; }
+  if( s.feespaid + add > s.feestobepaid){ alert("Exceeds total fees"); return; }
 
-  s.feespaid = add;
+  s.feespaid += add;
   s.feesremaining = s.feestobepaid - s.feespaid;
 s.history.push({
   date: new Date().toISOString().split("T")[0],
@@ -310,6 +310,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
