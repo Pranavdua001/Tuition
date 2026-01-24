@@ -139,7 +139,7 @@ function renderTeacher(){
       <td>₹${s.monthlyfees}</td>
       <td>₹${s.feestobepaid}</td>
       <td>₹${s.feespaid}</td>
-      <td>₹${s.feesremaining}</td>
+      <td>₹${s.feestobepaid-s.feespaid}</td>
       <td class="${s.feespaid >= s.feestobepaid ? 'paid':'unpaid'}">${s.feespaid >= s.feestobepaid ? 'Paid':'Unpaid'}</td>
       <td>
         <button onclick="editfeestobepaid(${i})">Edit Fees ( to be paid )</button>
@@ -267,7 +267,7 @@ function renderStudent(){
         <tr><th>Monthly Fees</th><td>₹${s.monthlyfees}</td></tr>
         <tr><th>Fees (to be Paid)</th><td>₹${s.feestobepaid}</td></tr>
         <tr><th>Fees (Paid)</th><td>₹${s.feespaid}</td></tr>
-        <tr><th>Fees (Remaining)</th><td>₹${s.feesremaining}</td></tr>
+        <tr><th>Fees (Remaining)</th><td>₹${s.feestobepaid-s.feespaid}</td></tr>
         <tr><th>Status</th><td class="${s.feespaid>=s.feestobepaid?'paid':'unpaid'}">${s.feespaid>=s.feestobepaid?'Paid':'Unpaid'}</td></tr>
       `;
 
@@ -310,6 +310,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
