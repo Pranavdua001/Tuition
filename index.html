@@ -67,18 +67,39 @@ let loggedStudent = null;
 function login(){
   const pwd = document.getElementById("password").value;
 
+  // Teacher login (local)
   if(pwd === TEACHER_PASSWORD){
-    hide("loginBox"); show("teacherBox"); renderTeacher(); return;
+    hide("loginBox");
+    show("teacherBox");
+    renderTeacher();
+    return;
   }
 
-  const s = teacherData.students.find(x => x.password === pwd);
-  if(s){
-    loggedStudent = s.name;
-    hide("loginBox"); show("studentBox"); renderStudent(); return;
-  }
+  // Student login (remote / shared)
+  fetch("students.json?v=" + Date.now())
+    .then(r => {
+      if(!r.ok) throw "no-data";
+      return r.json();
+    })
+    .then(arr => {
+      const students = JSON.parse(decodeJSON(arr));
+      const s = students.find(x => x.password === pwd);
 
-  alert("Invalid password");
+      if(!s){
+        alert("Invalid password");
+        return;
+      }
+
+      loggedStudent = s.name;
+      hide("loginBox");
+      show("studentBox");
+      renderStudent();
+    })
+    .catch(() => {
+      alert("Student data not available. Ask teacher to publish.");
+    });
 }
+
 
 /* ================= TEACHER FUNCTIONS ================= */
 function addStudent(){
@@ -243,4 +264,5 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
