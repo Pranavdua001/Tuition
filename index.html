@@ -153,6 +153,23 @@ function renderTeacher(){
   document.getElementById("teacherTable").innerHTML = html;
 }
 
+/* ----------- EDIT FEES TO BE PAID ----------- */
+function editfeestobepaid(i){
+  const s = teacherData.students[i];
+  if(!s) return;
+  if(!s.history) s.history = [];
+  const monthlyfees = s.monthlyfees;
+  let add = prompt(`Enter amount to be paid by ${s.name} (MonthlyFees: ₹${monthlyfees})`);
+  if(add === null) return;
+  add = Number(add);
+  if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
+
+  s.feestobepaid += add;
+  s.history.push({date: new Date().toISOString().split("T")[0], paid: add});
+  save();
+  renderTeacher();
+}
+
 /* ----------- EDIT FEES ----------- */
 function editFees(i){
   const s = teacherData.students[i];
@@ -271,6 +288,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
