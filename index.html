@@ -2,24 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Offline Tuition App - Fixed with History</title>
+<title>Smart Tuition Fee System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial, sans-serif;background:#f4f6f8;margin:0;padding:20px;}
-h2,h3{text-align:center;margin:2vh;margin-top:6vh;padding:0;}
-.box{max-width:1000px;margin:auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.1);margin-bottom:20px;}
-input,button,textarea{width:100%;padding:10px;margin-top:10px;border-radius:5px;border:1px solid #ccc;}
-button{background:#2563eb;color:#fff;border:none;cursor:pointer;}
-button:hover{opacity:0.9;}
-table{width:100%;border-collapse:collapse;margin-top:15px;}
-th,td{border:1px solid #ddd;padding:8px;text-align:center;}
-th{background:#f1f5f9;}
-.hidden{display:none;}
-.paid{color:green;font-weight:bold;}
-.unpaid{color:red;font-weight:bold;}
-textarea{resize:none;}
+body{font-family:Arial;background:#f4f6f8;padding:20px}
+.box{max-width:1000px;margin:auto;background:#fff;padding:20px;border-radius:10px;margin-bottom:20px}
+h2,h3{text-align:center}
+input,button{width:100%;padding:10px;margin-top:10px}
+button{background:#2563eb;color:#fff;border:none;cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:#f1f5f9}
+.hidden{display:none}
+.paid{color:green;font-weight:bold}
+.unpaid{color:red;font-weight:bold}
 </style>
 </head>
+
 <body>
 
 <!-- LOGIN -->
@@ -29,15 +28,15 @@ textarea{resize:none;}
   <button onclick="login()">Login</button>
 </div>
 
-<!-- TEACHER DASHBOARD -->
+<!-- TEACHER -->
 <div class="box hidden" id="teacherBox">
   <h2>Teacher Dashboard</h2>
-  <button onclick="addStudent()">Add New Student</button>
-  <button onclick="publishAll()">Publish All Students</button>
+  <button onclick="addStudent()">Add Student</button>
+  <button onclick="publishAll()">Publish</button>
   <table id="teacherTable"></table>
 </div>
 
-<!-- STUDENT DASHBOARD -->
+<!-- STUDENT -->
 <div class="box hidden" id="studentBox">
   <h2>Student Dashboard</h2>
   <table id="studentTable"></table>
@@ -46,224 +45,161 @@ textarea{resize:none;}
 </div>
 
 <script>
-/* ================= SECURITY ================= */
+/* ========= CONFIG ========= */
 const TEACHER_PASSWORD = "1234";
-const ENCODE_KEY = 7;
-const ENCODE_MULTIPLIER = 4;
+const KEY = 7, MUL = 4;
 
-/* ================= ENCODING ================= */
+/* ========= HELPERS ========= */
+function hide(id){document.getElementById(id).classList.add("hidden")}
+function show(id){document.getElementById(id).classList.remove("hidden")}
+
 function encodeJSON(str){
-  return Array.from(str).map(c => (c.charCodeAt(0)+ENCODE_KEY)*ENCODE_MULTIPLIER);
+  return Array.from(str).map(c => (c.charCodeAt(0)+KEY)*MUL);
 }
 function decodeJSON(arr){
-  return arr.map(n => String.fromCharCode((n/ENCODE_MULTIPLIER)-ENCODE_KEY)).join("");
+  return arr.map(n => String.fromCharCode(n/MUL-KEY)).join("");
 }
 
-/* ================= DATA ================= */
-let teacherData = JSON.parse(localStorage.getItem("teacherData")) || { students:[] };
+/* ========= DATA ========= */
+let teacherData = JSON.parse(localStorage.getItem("teacherData")) || {students:[]};
 let loggedStudent = null;
 
-/* ================= LOGIN ================= */
-function login(){
-  const pwd = document.getElementById("password").value;
-
-  // Teacher login (local)
-  if(pwd === TEACHER_PASSWORD){
-    hide("loginBox");
-    show("teacherBox");
-    renderTeacher();
-    return;
-  }
-
-  // Student login (remote / shared)
-  fetch("students.json?v=" + Date.now())
-    .then(r => {
-      if(!r.ok) throw "no-data";
-      return r.json();
-    })
-    .then(arr => {
-      const students = JSON.parse(decodeJSON(arr));
-      const s = students.find(x => x.password === pwd);
-
-      if(!s){
-        alert("Invalid password");
-        return;
-      }
-
-      loggedStudent = s.name;
-      hide("loginBox");
-      show("studentBox");
-      renderStudent();
-    })
-    .catch(() => {
-      alert("Student data not available. Ask teacher to publish.");
-    });
+/* ========= DATE / BILLING LOGIC ========= */
+function completedCycles(joinDate){
+  const today = new Date();
+  const join = new Date(joinDate);
+  let m = (today.getFullYear()-join.getFullYear())*12 + (today.getMonth()-join.getMonth());
+  if(today.getDate() < join.getDate()) m--;
+  return Math.max(0,m);
 }
 
+function totalPaid(payments){
+  return payments.reduce((s,p)=>s+p.amount,0);
+}
 
-/* ================= TEACHER FUNCTIONS ================= */
+function totalFeeTillNow(student){
+  return (completedCycles(student.joiningdate)+1) * student.monthlyfee;
+}
+
+function dueAmount(student){
+  return Math.max(0, totalFeeTillNow(student) - totalPaid(student.payments));
+}
+
+/* ========= LOGIN ========= */
+function login(){
+  const pwd = password.value;
+
+  if(pwd === TEACHER_PASSWORD){
+    hide("loginBox"); show("teacherBox"); renderTeacher(); return;
+  }
+
+  fetch("students.json?v="+Date.now())
+    .then(r=>r.json())
+    .then(arr=>{
+      const students = JSON.parse(decodeJSON(arr));
+      const s = students.find(x=>x.password===pwd);
+      if(!s) return alert("Invalid password");
+      loggedStudent = s.name;
+      hide("loginBox"); show("studentBox");
+      renderStudent();
+    })
+    .catch(()=>alert("Student data not available"));
+}
+
+/* ========= TEACHER ========= */
 function addStudent(){
-  const name = prompt("Enter student name:"); if(!name) return;
-  const password = prompt("Enter student password:"); if(!password) return;
-  const joiningdate = prompt("Enter joining date (YYYY-MM-DD):"); if(!joiningdate) return;
-  const monthlyfees = Number(prompt("Enter monthly fees:")); if(isNaN(monthlyfees)) return;
+  const name = prompt("Name");
+  const password = prompt("Password");
+  const joiningdate = prompt("Joining Date (YYYY-MM-DD)");
+  const monthlyfee = Number(prompt("Monthly Fee"));
+  if(!name||!password||!joiningdate||!monthlyfee) return;
 
   teacherData.students.push({
-    name: name,
-    password: password,
-    joiningdate: joiningdate,
-    monthlyfees: monthlyfees,
-    monthlyfeespaid: 0,
-    lastFeeCycle: 0,
-    history: []
+    name,password,joiningdate,monthlyfee,
+    payments:[]
   });
-
-  updateFeeCycles();
-  save();
-  renderTeacher();
+  save(); renderTeacher();
 }
 
 function renderTeacher(){
-  let html = `<tr>
-    <th>Name</th><th>Password</th><th>Joining Date</th>
-    <th>Monthly Fees</th><th>Fees Paid</th><th>Status</th><th>Actions</th></tr>`;
+  let html=`<tr>
+    <th>Name</th><th>Join</th><th>Monthly</th>
+    <th>Total Fees</th><th>Paid</th><th>Due</th><th>Status</th><th>Action</th>
+  </tr>`;
 
   teacherData.students.forEach((s,i)=>{
-    if(!s.history) s.history = []; // ensure history exists
-    html += `<tr>
+    const total = totalFeeTillNow(s);
+    const paid = totalPaid(s.payments);
+    const due = dueAmount(s);
+    html+=`<tr>
       <td>${s.name}</td>
-      <td>${s.password}</td>
       <td>${s.joiningdate}</td>
-      <td>₹${s.monthlyfees}</td>
-      <td>₹${s.monthlyfeespaid}</td>
-      <td class="${s.monthlyfeespaid >= s.monthlyfees ? 'paid':'unpaid'}">${s.monthlyfeespaid >= s.monthlyfees ? 'Paid':'Unpaid'}</td>
-      <td>
-        <button onclick="editFees(${i})">Edit Fees</button>
-        <button onclick="viewHistory(${i})">History</button>
-        <button onclick="delStudent(${i})">Delete</button>
-      </td>
+      <td>₹${s.monthlyfee}</td>
+      <td>₹${total}</td>
+      <td>₹${paid}</td>
+      <td>₹${due}</td>
+      <td class="${due===0?'paid':'unpaid'}">${due===0?'Paid':'Unpaid'}</td>
+      <td><button onclick="pay(${i})">Add Payment</button></td>
     </tr>`;
   });
-
-  document.getElementById("teacherTable").innerHTML = html;
+  teacherTable.innerHTML = html;
 }
 
-/* ----------- EDIT FEES ----------- */
-function editFees(i){
-  const s = teacherData.students[i];
-  if(!s) return;
-  if(!s.history) s.history = [];
-  const remaining = s.monthlyfees - s.monthlyfeespaid;
-  let add = prompt(`Enter amount paid by ${s.name} (Remaining: ₹${remaining})`);
-  if(add === null) return;
-  add = Number(add);
-  if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
-  if(s.monthlyfeespaid + add > s.monthlyfees){ alert("Exceeds total fees"); return; }
-
-  s.monthlyfeespaid += add;
-  s.history.push({date: new Date().toISOString().split("T")[0], paid: add});
-  save();
-  renderTeacher();
+function pay(i){
+  const amt = Number(prompt("Amount paid"));
+  if(!amt) return;
+  teacherData.students[i].payments.push({
+    date:new Date().toISOString().split("T")[0],
+    amount:amt
+  });
+  save(); renderTeacher();
 }
 
-/* ----------- VIEW HISTORY ----------- */
-function viewHistory(i){
-  const s = teacherData.students[i];
-  if(!s) { alert("Student not found"); return; }
-  if(!s.history || s.history.length===0){ alert("No payments yet."); return; }
-  let h = `Payment History for ${s.name}:\n\n`;
-  s.history.forEach((p,j)=>{ h += `${j+1}. ${p.date} - ₹${p.paid}\n`; });
-  alert(h);
-}
-
-/* ----------- DELETE STUDENT ----------- */
-function delStudent(i){
-  const s = teacherData.students[i];
-  if(!s) return;
-  if(!confirm(`Delete student ${s.name}?`)) return;
-  teacherData.students.splice(i,1);
-  save();
-  renderTeacher();
-}
-
-/* ----------- PUBLISH ALL STUDENTS ----------- */
 function publishAll(){
-  updateFeeCycles();
-  const encoded = encodeJSON(JSON.stringify(teacherData.students));
-  const blob = new Blob([JSON.stringify(encoded)],{type:"application/json"});
+  const enc = encodeJSON(JSON.stringify(teacherData.students));
+  const blob = new Blob([JSON.stringify(enc)],{type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "students.json";
   a.click();
-  alert("students.json downloaded — can be uploaded or shared");
 }
 
-/* ================= STUDENT DASHBOARD ================= */
+/* ========= STUDENT ========= */
 function renderStudent(){
   fetch("students.json")
     .then(r=>r.json())
     .then(arr=>{
       const students = JSON.parse(decodeJSON(arr));
       const s = students.find(x=>x.name===loggedStudent);
-      if(!s) throw 0;
-      if(!s.history) s.history = [];
 
-      const today = new Date();
-      const joining = new Date(s.joiningdate);
-      let monthsPassed = (today.getFullYear() - joining.getFullYear())*12 + (today.getMonth() - joining.getMonth());
-      if(today.getDate() < joining.getDate()) monthsPassed--;
-      if(monthsPassed > (s.lastFeeCycle||0)){
-        s.monthlyfeespaid = 0;
-        s.lastFeeCycle = monthsPassed;
-      }
+      const total = totalFeeTillNow(s);
+      const paid = totalPaid(s.payments);
+      const due = dueAmount(s);
 
-      document.getElementById("studentTable").innerHTML = `
+      studentTable.innerHTML=`
         <tr><th>Name</th><td>${s.name}</td></tr>
-        <tr><th>Joining Date</th><td>${s.joiningdate}</td></tr>
-        <tr><th>Monthly Fees</th><td>₹${s.monthlyfees}</td></tr>
-        <tr><th>Fees Paid</th><td>₹${s.monthlyfeespaid}</td></tr>
-        <tr><th>Status</th><td class="${s.monthlyfeespaid>=s.monthlyfees?'paid':'unpaid'}">${s.monthlyfeespaid>=s.monthlyfees?'Paid':'Unpaid'}</td></tr>
+        <tr><th>Joining</th><td>${s.joiningdate}</td></tr>
+        <tr><th>Monthly Fee</th><td>₹${s.monthlyfee}</td></tr>
+        <tr><th>Total Fees</th><td>₹${total}</td></tr>
+        <tr><th>Paid</th><td>₹${paid}</td></tr>
+        <tr><th>Due</th><td>₹${due}</td></tr>
+        <tr><th>Status</th><td class="${due===0?'paid':'unpaid'}">${due===0?'Paid':'Unpaid'}</td></tr>
       `;
 
-      // Payment history table
-      let historyHTML = `<tr><th>#</th><th>Date</th><th>Amount Paid</th></tr>`;
-      if(s.history.length===0){
-        historyHTML += `<tr><td colspan="3">No payments yet</td></tr>`;
-      } else {
-        s.history.forEach((p,j)=>{
-          historyHTML += `<tr><td>${j+1}</td><td>${p.date}</td><td>₹${p.paid}</td></tr>`;
-        });
-      }
-      document.getElementById("studentHistoryTable").innerHTML = historyHTML;
-    })
-    .catch(()=> document.getElementById("studentTable").innerHTML="No data published yet");
+      let h=`<tr><th>#</th><th>Date</th><th>Amount</th></tr>`;
+      if(!s.payments.length) h+=`<tr><td colspan=3>No payments</td></tr>`;
+      s.payments.forEach((p,i)=>{
+        h+=`<tr><td>${i+1}</td><td>${p.date}</td><td>₹${p.amount}</td></tr>`;
+      });
+      studentHistoryTable.innerHTML=h;
+    });
 }
 
-/* ================= FEE CYCLE UPDATE ================= */
-function updateFeeCycles(){
-  const today = new Date();
-  teacherData.students.forEach(s=>{
-    if(!s.history) s.history = [];
-    const joining = new Date(s.joiningdate);
-    let monthsPassed = (today.getFullYear() - joining.getFullYear())*12 + (today.getMonth() - joining.getMonth());
-    if(today.getDate() < joining.getDate()) monthsPassed--;
-    if(monthsPassed > (s.lastFeeCycle||0)){
-      s.monthlyfeespaid = 0;
-      s.lastFeeCycle = monthsPassed;
-    }
-  });
+/* ========= STORAGE ========= */
+function save(){
+  localStorage.setItem("teacherData",JSON.stringify(teacherData));
 }
-
-/* ================= LOCAL STORAGE ================= */
-function save(){ localStorage.setItem("teacherData",JSON.stringify(teacherData)); }
-
-/* ================= HELPERS ================= */
-function hide(id){document.getElementById(id).classList.add("hidden")}
-function show(id){document.getElementById(id).classList.remove("hidden")}
-
 </script>
+
 </body>
 </html>
-
-
-
