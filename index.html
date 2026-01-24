@@ -164,7 +164,7 @@ function editfeestobepaid(i){
   add = Number(add);
   if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
 
-  s.feestobepaid += add;
+  s.feestobepaid = add;
   s.history.push({date: new Date().toISOString().split("T")[0], paid: add});
   save();
   renderTeacher();
@@ -288,6 +288,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
