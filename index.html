@@ -185,7 +185,7 @@ function editFees(i){
   if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
   if(s.feespaid + add > s.feestobepaid){ alert("Exceeds total fees"); return; }
 
-  s.feespaid += add;
+  s.feespaid = add;
   s.feesremaining = s.feestobepaid - s.feespaid;
 s.history.push({
   date: new Date().toISOString().split("T")[0],
@@ -310,6 +310,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
