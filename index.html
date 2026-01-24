@@ -165,8 +165,11 @@ function editfeestobepaid(i){
   if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
 
   s.feestobepaid = add;
-  s.history.push({date: new Date().toISOString().split("T")[0], paid: add});
-  save();
+s.history.push({
+  date: new Date().toISOString().split("T")[0],
+  type: "feestobepaid",
+  amount: add
+});  save();
   renderTeacher();
 }
 
@@ -184,8 +187,11 @@ function editFees(i){
 
   s.feespaid += add;
   s.feesremaining = s.feestobepaid - s.feespaid;
-  s.history.push({date: new Date().toISOString().split("T")[0], paid: add});
-  save();
+s.history.push({
+  date: new Date().toISOString().split("T")[0],
+  type: "feespaid",
+  amount: add
+});  save();
   renderTeacher();
 }
 
@@ -289,6 +295,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
