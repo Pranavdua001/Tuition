@@ -115,7 +115,7 @@ function addStudent(){
     monthlyfees: monthlyfees,
     feestobepaid: 0,
     feespaid: 0,
-    remaining: 0,
+    feesremaining: 0,
     lastFeeCycle: 0,
     history: []
   });
@@ -226,10 +226,10 @@ function renderStudent(){
         <tr><th>Name</th><td>${s.name}</td></tr>
         <tr><th>Joining Date</th><td>${s.joiningdate}</td></tr>
         <tr><th>Monthly Fees</th><td>₹${s.monthlyfees}</td></tr>
-        <tr><th>Fees Paid</th><td>₹${s.feestobepaid}</td></tr>
-        <tr><th>Fees Paid</th><td>₹${s.feespaid}</td></tr>
-        <tr><th>Fees Paid</th><td>₹${s.feesremaining}</td></tr>
-        <tr><th>Status</th><td class="${s.monthlyfeespaid>=s.feestobepaid?'paid':'unpaid'}">${s.monthlyfeespaid>=s.feestobepaid?'Paid':'Unpaid'}</td></tr>
+        <tr><th>Fees (to be Paid)</th><td>₹${s.feestobepaid}</td></tr>
+        <tr><th>Fees (Paid)</th><td>₹${s.feespaid}</td></tr>
+        <tr><th>Fees (Remaining)</th><td>₹${s.feesremaining}</td></tr>
+        <tr><th>Status</th><td class="${s.feespaid>=s.feestobepaid?'paid':'unpaid'}">${s.feespaid>=s.feestobepaid?'Paid':'Unpaid'}</td></tr>
       `;
 
       // Payment history table
@@ -271,5 +271,6 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
