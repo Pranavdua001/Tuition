@@ -5,15 +5,16 @@
 <title>Tuition App</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial, sans-serif;background:#fff9e6;margin:0;padding:20px;}
+body{font-family:Arial, sans-serif;background:#564100;margin:0;padding:20px;}
 h2,h3{text-align:center;margin:2vh;margin-top:3vh;padding:0;color: #a02525;margin-bottom:3vh;}
-.box{max-width:1000px;margin:auto;background:#fff9e6;padding:20px;border-radius:10px;box-shadow:0 5px 15px #7a7474;margin-bottom:20px;}
+.box{max-width:1000px;margin:auto;background:#ffc818;padding:20px;border-radius:10px;box-shadow:0 5px 15px #ffc818;margin-bottom:20px;}
 input,button,textarea{width:80%;margin-left:10%;padding:10px;margin-top:10px;border-radius:5px;border:1px solid #ccc;}
-button{background:#2563eb;color:#fff;border:none;cursor:pointer;margin-bottom: 2vh;}
+button,.innerbutton{background:#2563eb;color:#fff;border:none;cursor:pointer;margin-bottom: 2vh;}
 button:hover{opacity:0.9;}
 table{width:100%;border-collapse:collapse;margin-top:15px;background:#ffffff;}
 th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 th{background:#f1f5f9;}
+.innerbutton{margin-bottom:1vh;background:#2563ea}
 .hidden{display:none;}
 .paid{color:green;font-weight:bold;}
 .unpaid{color:red;font-weight:bold;}
@@ -142,10 +143,10 @@ function renderTeacher(){
       <td>₹${s.feestobepaid-s.feespaid}</td>
       <td class="${s.feespaid >= s.feestobepaid ? 'paid':'unpaid'}">${s.feespaid >= s.feestobepaid ? 'Paid':'Unpaid'}</td>
       <td>
-        <button onclick="editfeestobepaid(${i})">Edit Fees ( to be paid )</button>
-        <button onclick="editFees(${i})">Edit Fees Paid</button>
-        <button onclick="viewHistory(${i})">History</button>
-        <button onclick="delStudent(${i})">Delete</button>
+        <button class="innerbutton" onclick="editfeestobepaid(${i})">Edit Fees ( to be paid )</button>
+        <button class="innerbutton" onclick="editFees(${i})">Edit Fees Paid</button>
+        <button class="innerbutton" onclick="viewHistory(${i})">History</button>
+        <button class="innerbutton" onclick="delStudent(${i})">Delete</button>
       </td>
     </tr>`;
   });
@@ -310,6 +311,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
