@@ -162,16 +162,16 @@ function editmonthlyfees(i) {
   const s = teacherData.students[i];
   if(!s) return;
   const monthlyfees = s.monthlyfees;
-  let add = prompt(`Enter new monthly fees of ${s.name} (MonthlyFees: ₹${monthlyfees})`);
+  let add = prompt(`Enter change in monthly fees of ${s.name} (MonthlyFees: ₹${monthlyfees})`);
 
-    if (isNaN(add) || add <= 0) {
+    if (isNaN(add)) {
         return;
     }
 
-    s.monthlyfees=add;
+    s.monthlyfees += Number(add);
+    s.feestobepaid += Number(add);
 
     save();
-    updateFeeCycles();
     renderTeacher();
 }
 
@@ -383,6 +383,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
