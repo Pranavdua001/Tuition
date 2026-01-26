@@ -295,7 +295,14 @@ function renderStudent(){
         <tr><th>Fees (to be Paid)</th><td>₹${s.feestobepaid}</td></tr>
         <tr><th>Fees (Paid)</th><td>₹${s.feespaid}</td></tr>
         <tr><th>Fees (Remaining)</th><td>₹${s.feestobepaid-s.feespaid}</td></tr>
-        <tr><th>Status</th><td class="${s.feespaid>=s.feestobepaid?'paid':'unpaid'}">${s.feespaid>=s.feestobepaid?'Paid':'Unpaid'}</td></tr>
+        <tr><th>Status</th><td class="${
+    s.feestobepaid - s.feespaid === 0 ? 'paid' :
+    s.feestobepaid - s.feespaid > 0 ? 'unpaid' : 'overpaid'
+}">
+${
+    s.feestobepaid - s.feespaid === 0 ? 'Paid' :
+    s.feestobepaid - s.feespaid > 0 ? 'Unpaid' : 'Overpaid'
+}</td></tr>
       `;
 
       // Payment history table
@@ -397,6 +404,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
