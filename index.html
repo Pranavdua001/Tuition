@@ -72,6 +72,7 @@ function login(){
   if(pwd === TEACHER_PASSWORD){
     hide("loginBox");
     show("teacherBox");
+    updateFeeCycles();
     renderTeacher();
     return;
   }
@@ -94,12 +95,12 @@ function login(){
       loggedStudent = s.name;
       hide("loginBox");
       show("studentBox");
+      updateFeeCycles();
       renderStudent();
     })
     .catch(() => {
       alert("Student data not available. Ask teacher to publish.");
     });
-  updateFeeCycles();
 }
 
 
@@ -363,5 +364,6 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
