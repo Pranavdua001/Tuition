@@ -278,10 +278,15 @@ function renderStudent(){
     })
     .catch(()=> document.getElementById("studentTable").innerHTML="No data published yet");
 }
-function updateFeeCycles(){
+function updateFeeCycles() {
   const today = new Date();
+  console.log("===== UPDATE FEE CYCLES RUN =====");
+  console.log("Today:", today.toString());
 
   teacherData.students.forEach(s => {
+    console.log("----- STUDENT CHECK -----");
+    console.log("Name:", s.name);
+
     s.history ??= [];
     s.lastFeeCycle ??= -1;
     s.feestobepaid ??= 0;
@@ -289,29 +294,62 @@ function updateFeeCycles(){
 
     const joining = new Date(s.joiningdate);
 
+    console.log("Joining date (raw):", s.joiningdate);
+    console.log("Joining date (obj):", joining.toString());
+    console.log("Last fee cycle:", s.lastFeeCycle);
+    console.log("Monthly fees:", s.monthlyfees);
+    console.log("Fees to be paid (before):", s.feestobepaid);
+    console.log("Fees paid (before):", s.feespaid);
+
     let monthsPassed =
       (today.getFullYear() - joining.getFullYear()) * 12 +
       (today.getMonth() - joining.getMonth());
 
-    if (today.getDate() < joining.getDate()) monthsPassed--;
-    if (monthsPassed < 0) return;
+    console.log("Months passed (before date check):", monthsPassed);
+    console.log("Today date:", today.getDate());
+    console.log("Joining date:", joining.getDate());
+
+    if (today.getDate() < joining.getDate()) {
+      monthsPassed--;
+      console.log("⚠ Date check triggered → monthsPassed decremented");
+    } else {
+      console.log("✅ Date check passed → no decrement");
+    }
+
+    console.log("Months passed (final):", monthsPassed);
+
+    if (monthsPassed < 0) {
+      console.log("❌ Student not active yet → skipping");
+      return;
+    }
 
     if (monthsPassed > s.lastFeeCycle) {
+      console.log("✅ FEE RECYCLE TRIGGERED");
+
       const overdue = s.feestobepaid - s.feespaid;
+      console.log("Overdue amount:", overdue);
 
       s.feespaid = 0;
       s.feestobepaid = overdue + s.monthlyfees;
       s.feesremaining = s.feestobepaid;
       s.lastFeeCycle = monthsPassed;
 
-      // ONLY fee_due history entry
+      console.log("New fees to be paid:", s.feestobepaid);
+      console.log("New lastFeeCycle:", s.lastFeeCycle);
+
       s.history.push({
         date: today.toISOString().split("T")[0],
         type: "fee_due",
         amount: s.feestobepaid
       });
+
+      console.log("📌 History entry added");
+    } else {
+      console.log("❌ NO RECYCLE (monthsPassed <= lastFeeCycle)");
     }
   });
+
+  console.log("===== UPDATE COMPLETE =====");
 }
 
 
@@ -325,4 +363,5 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
