@@ -145,7 +145,7 @@ function renderTeacher(){
       <td>₹${s.feestobepaid-s.feespaid}</td>
       <td class="${s.feespaid >= s.feestobepaid ? 'paid':'unpaid'}">${s.feespaid >= s.feestobepaid ? 'Paid':'Unpaid'}</td>
       <td>
-        <button class="innerbutton" onclick="editmonthlyfees(${i})">Edit Montly Fees</button>
+        <button class="innerbutton" onclick="editmonthlyfees(${i})">Edit Monthly Fees</button>
         <button class="innerbutton" onclick="editfeestobepaid(${i})">Edit Fees ( to be paid )</button>
         <button class="innerbutton" onclick="editFees(${i})">Edit Fees Paid</button>
         <button class="innerbutton" onclick="viewHistory(${i})">History</button>
@@ -170,8 +170,8 @@ function editmonthlyfees(i) {
 
     s.monthlyfees=add;
 
-    updateFeeCycles();
     save();
+    updateFeeCycles();
     renderTeacher();
 }
 
@@ -383,6 +383,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
