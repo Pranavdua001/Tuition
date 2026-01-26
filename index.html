@@ -117,7 +117,7 @@ function addStudent(){
     feestobepaid: 0,
     feespaid: 0,
     feesremaining: 0,
-    lastFeeCycle: 0,
+    lastFeeCycle: -1,
     history: []
   });
 
@@ -253,15 +253,6 @@ function renderStudent(){
       if(!s) throw 0;
       if(!s.history) s.history = [];
 
-      const today = new Date();
-      const joining = new Date(s.joiningdate);
-      let monthsPassed = (today.getFullYear() - joining.getFullYear())*12 + (today.getMonth() - joining.getMonth());
-      if(today.getDate() < joining.getDate()) monthsPassed--;
-      if(monthsPassed > (s.lastFeeCycle||0)){
-        s.feespaid = 0;
-        s.lastFeeCycle = monthsPassed;
-      }
-
       document.getElementById("studentTable").innerHTML = `
         <tr><th>Name</th><td>${s.name}</td></tr>
         <tr><th>Joining Date</th><td>${s.joiningdate}</td></tr>
@@ -286,20 +277,42 @@ function renderStudent(){
     })
     .catch(()=> document.getElementById("studentTable").innerHTML="No data published yet");
 }
-/* ================= FEE CYCLE UPDATE ================= */
 function updateFeeCycles(){
   const today = new Date();
-  teacherData.students.forEach(s=>{
-    if(!s.history) s.history = [];
+
+  teacherData.students.forEach(s => {
+    s.history ??= [];
+    s.lastFeeCycle ??= -1;
+    s.feestobepaid ??= 0;
+    s.feespaid ??= 0;
+
     const joining = new Date(s.joiningdate);
-    let monthsPassed = (today.getFullYear() - joining.getFullYear())*12 + (today.getMonth() - joining.getMonth());
-    if(today.getDate() < joining.getDate()) monthsPassed--;
-    if(monthsPassed > (s.lastFeeCycle||0)){
+
+    let monthsPassed =
+      (today.getFullYear() - joining.getFullYear()) * 12 +
+      (today.getMonth() - joining.getMonth());
+
+    if (today.getDate() < joining.getDate()) monthsPassed--;
+    if (monthsPassed < 0) return;
+
+    if (monthsPassed > s.lastFeeCycle) {
+      const overdue = s.feestobepaid - s.feespaid;
+
       s.feespaid = 0;
+      s.feestobepaid = overdue + s.monthlyfees;
+      s.feesremaining = s.feestobepaid;
       s.lastFeeCycle = monthsPassed;
+
+      // ONLY fee_due history entry
+      s.history.push({
+        date: today.toISOString().split("T")[0],
+        type: "fee_due",
+        amount: s.feestobepaid
+      });
     }
   });
 }
+
 
 /* ================= LOCAL STORAGE ================= */
 function save(){ localStorage.setItem("teacherData",JSON.stringify(teacherData)); }
@@ -311,29 +324,3 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
