@@ -18,6 +18,7 @@ th{background:#f1f5f9;}
 .hidden{display:none;}
 .paid{color:green;font-weight:bold;}
 .unpaid{color:red;font-weight:bold;}
+.overpaid { color: orange; font-weight: bold; }
 textarea{resize:none;}
 </style>
 </head>
@@ -143,7 +144,14 @@ function renderTeacher(){
       <td>₹${s.feestobepaid}</td>
       <td>₹${s.feespaid}</td>
       <td>₹${s.feestobepaid-s.feespaid}</td>
-      <td class="${s.feespaid >= s.feestobepaid ? 'paid':'unpaid'}">${s.feespaid >= s.feestobepaid ? 'Paid':'Unpaid'}</td>
+<td class="${
+    s.feestobepaid - s.feespaid === 0 ? 'paid' :
+    s.feestobepaid - s.feespaid > 0 ? 'unpaid' : 'overpaid'
+}">
+${
+    s.feestobepaid - s.feespaid === 0 ? 'Paid' :
+    s.feestobepaid - s.feespaid > 0 ? 'Unpaid' : 'Overpaid'
+}</td>
       <td>
         <button class="innerbutton" onclick="editmonthlyfees(${i})">Edit Monthly Fees</button>
         <button class="innerbutton" onclick="editfeestobepaid(${i})">Edit Fees ( to be paid )</button>
@@ -211,8 +219,7 @@ function editFees(i){
   let add = prompt(`Enter amount paid by ${s.name} (Remaining: ₹${remaining})`);
   if(add === null) return;
   add = Number(add);
-  if(isNaN(add) || add<=0){ alert("Enter valid amount"); return;}
-  if( s.feespaid + add > s.feestobepaid){ alert("Exceeds total fees"); return; }
+  if(isNaN(add)){ alert("Enter valid amount"); return;}
 
   s.feespaid += add;
   s.feesremaining = s.feestobepaid - s.feespaid;
@@ -390,6 +397,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
