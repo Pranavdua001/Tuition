@@ -161,16 +161,23 @@ function renderTeacher(){
 function editmonthlyfees(i) {
   const s = teacherData.students[i];
   if(!s) return;
+  if(!s.history) s.history = [];
   const monthlyfees = s.monthlyfees;
-  let add = prompt(`Enter change in monthly fees of ${s.name} (MonthlyFees: ₹${monthlyfees})`);
+  let add = prompt(`Enter new monthly fees of ${s.name} ( Prev. MonthlyFees: ₹${monthlyfees})`);
 
     if (isNaN(add)) {
         return;
     }
 
-    s.monthlyfees += Number(add);
-    s.feestobepaid += Number(add);
+    s.feestobepaid = s.feestobepaid - s.monthlyfees + Number(add);
+    s.monthlyfees = Number(add);
 
+  s.history.push({
+  date: new Date().toISOString().split("T")[0],
+  type: "fee_due",
+  amount: add
+});
+  
     save();
     renderTeacher();
 }
@@ -383,6 +390,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
