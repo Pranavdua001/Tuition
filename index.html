@@ -200,6 +200,13 @@ function editfeestobepaid(i){
   let add = prompt(`Enter amount to be paid by ${s.name} (MonthlyFees: ₹${monthlyfees})`);
   if(add === null) return;
   add = Number(add);
+  // ✅ Remove only the LAST fee_due entry (not all)
+  for (let j = s.history.length - 1; j >= 0; j--) {
+    if (s.history[j].type === "fee_due") {
+      s.history.splice(j, 1);
+      break; // remove only one (the latest)
+    }
+  }
   if(isNaN(add)){ alert("Enter valid amount"); return;}
   s.feestobepaid = add;
   s.history.push({
@@ -404,6 +411,7 @@ function show(id){document.getElementById(id).classList.remove("hidden")}
 </script>
 </body>
 </html>
+
 
 
 
