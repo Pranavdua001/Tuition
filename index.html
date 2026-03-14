@@ -209,8 +209,6 @@ if(remaining < 0) status = "overpaid";
 if(currentFilter !== "all" && currentFilter !== status) return;
     if(!s.history) s.history = [];
 
-const remaining = s.feestobepaid - s.feespaid;
-
 totalStudents++;
 
 if(remaining > 0) totalPending += remaining;
