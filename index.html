@@ -71,30 +71,25 @@ style="width:60%;margin-left:20%;margin-bottom:10px;">
     <p id="totalPending">₹0</p>
   </div>
 
-  <button onclick="setFilter('overpaid')" style="width:auto;margin:0;padding:6px 12px;"background:#ffedd5;width:180px;">
-    <h3>Overpaid</h3>
-    <p id="totalOverpaid">₹0</p>
-  </button>
-
-  <div class="box" style="background:#bbf7d0;width:180px;">
-  <h3>Paid Students</h3>
-  <p id="paidStudents">0</p>
-</div>
-
-<div class="box" style="background:#fecaca;width:180px;">
-  <h3>Unpaid Students</h3>
-  <p id="unpaidStudents">0</p>
-</div>
-
-<div class="box" style="background:#fed7aa;width:180px;">
-  <h3>Overpaid Students</h3>
-  <p id="overpaidStudents">0</p>
-</div>
-
-<div class="box" style="background:#dbeafe;width:180px;">
+  <div class="box" style="background:#dbeafe;width:180px;">
   <h3>Collection Rate</h3>
   <p id="collectionRate">0%</p>
 </div>
+
+  <button onclick="setFilter('paid')" style="background:#bbf7d0;width:180px;">
+  <h3>Paid Students</h3>
+  <p id="paidStudents">0</p>
+</button>
+
+<button onclick="setFilter('unpaid')" style="background:#fecaca;width:180px;">
+  <h3>Unpaid Students</h3>
+  <p id="unpaidStudents">0</p>
+</button>
+
+<button onclick="setFilter('overpaid')" style="background:#fed7aa;width:180px;">
+  <h3>Overpaid Students</h3>
+  <p id="overpaidStudents">0</p>
+</button>
 
 </div>
   <table id="teacherTable"></table>
