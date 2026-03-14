@@ -39,6 +39,12 @@ id="searchStudent"
 placeholder="Search student by name..." 
 oninput="renderTeacher()" 
 style="width:60%;margin-left:20%;margin-bottom:10px;">
+  <div style="text-align:center;margin-bottom:10px;">
+  <button onclick="setFilter('all')">All</button>
+  <button onclick="setFilter('paid')">Paid</button>
+  <button onclick="setFilter('unpaid')">Unpaid</button>
+  <button onclick="setFilter('overpaid')">Overpaid</button>
+</div>
   <div id="insights" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;justify-content:center;">
   
   <div class="box" style="background:#e2e8f0;width:180px;">
@@ -112,6 +118,7 @@ function decodeJSON(arr){
 /* ================= DATA ================= */
 let teacherData = JSON.parse(localStorage.getItem("teacherData")) || { students:[] };
 let loggedStudent = null;
+let currentFilter = "all";
 
 /* ================= LOGIN ================= */
 function login(){
@@ -193,6 +200,13 @@ function renderTeacher(){
 
   teacherData.students.forEach((s,i)=>{
     if(!s.name.toLowerCase().includes(search)) return;
+    const remaining = s.feestobepaid - s.feespaid;
+
+let status = "paid";
+if(remaining > 0) status = "unpaid";
+if(remaining < 0) status = "overpaid";
+
+if(currentFilter !== "all" && currentFilter !== status) return;
     if(!s.history) s.history = [];
 
 const remaining = s.feestobepaid - s.feespaid;
@@ -488,6 +502,11 @@ function save(){ localStorage.setItem("teacherData",JSON.stringify(teacherData))
 /* ================= HELPERS ================= */
 function hide(id){document.getElementById(id).classList.add("hidden")}
 function show(id){document.getElementById(id).classList.remove("hidden")}
+
+function setFilter(f){
+  currentFilter = f;
+  renderTeacher();
+}
 
 </script>
 </body>
