@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,7 +30,7 @@ border-radius:10px;
 margin-bottom:20px;
 }
 
-input,button,textarea,select{
+input,button,select{
 width:80%;
 margin-left:10%;
 padding:10px;
@@ -46,15 +47,13 @@ cursor:pointer;
 margin-bottom:2vh;
 }
 
-button:hover{
-opacity:0.9;
-}
+button:hover{opacity:0.9}
 
 table{
 width:100%;
 border-collapse:collapse;
 margin-top:15px;
-background:#ffffff;
+background:#fff;
 }
 
 th,td{
@@ -63,40 +62,33 @@ padding:8px;
 text-align:center;
 }
 
-th{
-background:#f1f5f9;
-}
+th{background:#f1f5f9}
 
 .innerbutton{
 margin-bottom:1vh;
 background:#2563ea
 }
 
-.hidden{
-display:none;
-}
+.hidden{display:none}
 
-.paid{color:green;font-weight:bold;}
-.unpaid{color:red;font-weight:bold;}
-.overpaid{color:orange;font-weight:bold;}
-
-textarea{resize:none;}
+.paid{color:green;font-weight:bold}
+.unpaid{color:red;font-weight:bold}
+.overpaid{color:orange;font-weight:bold}
 
 .dashboard{
 display:flex;
 flex-wrap:wrap;
 gap:10px;
-margin-bottom:20px;
+margin-bottom:15px;
 }
 
 .card{
 flex:1;
 background:white;
-padding:15px;
+padding:12px;
 border-radius:8px;
-text-align:center;
 font-weight:bold;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
+text-align:center;
 }
 
 .controls{
@@ -124,15 +116,10 @@ overflow-x:auto;
 
 <!-- LOGIN -->
 <div class="box" id="loginBox">
-
 <h2>Tuition Login</h2>
-
 <input id="password" type="password" placeholder="Enter password">
-
 <button onclick="login()">Login</button>
-
 </div>
-
 
 
 <!-- TEACHER DASHBOARD -->
@@ -141,17 +128,17 @@ overflow-x:auto;
 <h2>Teacher Dashboard</h2>
 
 <div class="dashboard">
-
-<div class="card" id="totalStudents">Students : 0</div>
-<div class="card" id="totalPending">Pending : ₹0</div>
-<div class="card" id="totalPaid">Collected : ₹0</div>
-<div class="card" id="totalUnpaid">Unpaid Students : 0</div>
-
+<div class="card" id="totalStudents">Students:0</div>
+<div class="card" id="pendingFees">Pending:₹0</div>
+<div class="card" id="collectedFees">Collected:₹0</div>
+<div class="card" id="unpaidStudents">Unpaid:0</div>
+<div class="card" id="paidStudents">Paid:0</div>
+<div class="card" id="overpaidStudents">Overpaid:0</div>
 </div>
 
 <div class="controls">
 
-<input id="searchStudent" placeholder="Search student name..." onkeyup="renderTeacher()">
+<input id="searchStudent" placeholder="Search student..." onkeyup="renderTeacher()">
 
 <select id="statusFilter" onchange="renderTeacher()">
 <option value="all">All Students</option>
@@ -162,8 +149,13 @@ overflow-x:auto;
 
 </div>
 
-<button onclick="addStudent()">Add New Student</button>
-<button onclick="publishAll()">Publish All Students</button>
+<button onclick="addStudent()">Add Student</button>
+<button onclick="publishAll()">Publish Students</button>
+
+<button onclick="exportBackup()">Export Backup</button>
+
+<input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
+<button onclick="document.getElementById('importFile').click()">Import Backup</button>
 
 <div class="table-container">
 <table id="teacherTable"></table>
@@ -172,20 +164,14 @@ overflow-x:auto;
 </div>
 
 
-
 <!-- STUDENT DASHBOARD -->
 <div class="box hidden" id="studentBox">
-
 <h2>Student Dashboard</h2>
-
 <table id="studentTable"></table>
 
 <h3>Payment History</h3>
-
 <table id="studentHistoryTable"></table>
-
 </div>
-
 
 
 <script>
@@ -197,28 +183,21 @@ const ENCODE_KEY=7
 const ENCODE_MULTIPLIER=4
 
 
-
 /* ENCODING */
 
 function encodeJSON(str){
-
 return Array.from(str).map(c=>(c.charCodeAt(0)+ENCODE_KEY)*ENCODE_MULTIPLIER)
-
 }
 
 function decodeJSON(arr){
-
 return arr.map(n=>String.fromCharCode((n/ENCODE_MULTIPLIER)-ENCODE_KEY)).join("")
-
 }
-
 
 
 /* DATA */
 
 let teacherData=JSON.parse(localStorage.getItem("teacherData"))||{students:[]}
 let loggedStudent=null
-
 
 
 /* LOGIN */
@@ -248,12 +227,7 @@ const students=JSON.parse(decodeJSON(arr))
 
 const s=students.find(x=>x.password===pwd)
 
-if(!s){
-
-alert("Invalid password")
-return
-
-}
+if(!s){alert("Invalid password");return}
 
 loggedStudent=s.name
 
@@ -269,25 +243,23 @@ renderStudent()
 }
 
 
-
 /* ADD STUDENT */
 
 function addStudent(){
 
-const name=prompt("Student Name")
+const name=prompt("Student name")
 if(!name)return
 
-const password=prompt("Student Password")
+const password=prompt("Password")
 if(!password)return
 
-const joiningdate=prompt("Joining Date YYYY-MM-DD")
+const joiningdate=prompt("Joining date YYYY-MM-DD")
 if(!joiningdate)return
 
-const monthlyfees=Number(prompt("Monthly Fees"))
+const monthlyfees=Number(prompt("Monthly fees"))
 if(isNaN(monthlyfees))return
 
 teacherData.students.push({
-
 name,
 password,
 joiningdate,
@@ -297,7 +269,6 @@ feespaid:0,
 feesremaining:0,
 lastFeeCycle:-1,
 history:[]
-
 })
 
 updateFeeCycles()
@@ -308,8 +279,7 @@ renderTeacher()
 }
 
 
-
-/* TEACHER TABLE */
+/* RENDER TABLE */
 
 function renderTeacher(){
 
@@ -317,9 +287,11 @@ const filter=document.getElementById("statusFilter").value
 const search=document.getElementById("searchStudent").value.toLowerCase()
 
 let totalStudents=0
-let totalPending=0
-let totalPaid=0
-let unpaidStudents=0
+let pending=0
+let collected=0
+let unpaid=0
+let paid=0
+let overpaid=0
 
 let html=`<tr>
 <th>Name</th>
@@ -341,23 +313,26 @@ let status="paid"
 if(remaining>0)status="unpaid"
 if(remaining<0)status="overpaid"
 
-if(filter!=="all"&&filter!==status)return
-
-if(search&&!s.name.toLowerCase().includes(search))return
+if(filter!=="all" && filter!==status)return
+if(search && !s.name.toLowerCase().includes(search))return
 
 totalStudents++
 
 if(remaining>0){
-
-totalPending+=remaining
-unpaidStudents++
-
+pending+=remaining
+unpaid++
+}
+else if(remaining===0){
+paid++
+}
+else{
+overpaid++
 }
 
-totalPaid+=s.feespaid
+collected+=s.feespaid
 
-html+=`<tr>
-
+html+=`
+<tr>
 <td>${s.name}</td>
 <td>${s.password}</td>
 <td>${s.joiningdate}</td>
@@ -365,57 +340,89 @@ html+=`<tr>
 <td>₹${s.feestobepaid}</td>
 <td>₹${s.feespaid}</td>
 <td>₹${remaining}</td>
-
-<td class="${status}">
-
-${status.charAt(0).toUpperCase()+status.slice(1)}
-
-</td>
-
+<td class="${status}">${status}</td>
 <td>
 
-<button class="innerbutton" onclick="editFees(${i})">Add Payment</button>
+<button class="innerbutton" onclick="editMonthlyFees(${i})">Edit Monthly</button>
+
+<button class="innerbutton" onclick="editFeesToBePaid(${i})">Edit To Pay</button>
+
+<button class="innerbutton" onclick="addPayment(${i})">Add Payment</button>
+
 <button class="innerbutton" onclick="viewHistory(${i})">History</button>
+
 <button class="innerbutton" onclick="delStudent(${i})">Delete</button>
 
 </td>
-
-</tr>`
+</tr>
+`
 
 })
 
 document.getElementById("teacherTable").innerHTML=html
 
-document.getElementById("totalStudents").innerText="Students : "+totalStudents
-document.getElementById("totalPending").innerText="Pending : ₹"+totalPending
-document.getElementById("totalPaid").innerText="Collected : ₹"+totalPaid
-document.getElementById("totalUnpaid").innerText="Unpaid Students : "+unpaidStudents
+document.getElementById("totalStudents").innerText="Students:"+totalStudents
+document.getElementById("pendingFees").innerText="Pending:₹"+pending
+document.getElementById("collectedFees").innerText="Collected:₹"+collected
+document.getElementById("unpaidStudents").innerText="Unpaid:"+unpaid
+document.getElementById("paidStudents").innerText="Paid:"+paid
+document.getElementById("overpaidStudents").innerText="Overpaid:"+overpaid
 
 }
 
 
+/* EDIT MONTHLY */
 
-/* EDIT PAYMENT */
-
-function editFees(i){
+function editMonthlyFees(i){
 
 const s=teacherData.students[i]
 
-const remaining=s.feestobepaid-s.feespaid
+let newFee=Number(prompt("New monthly fee"))
 
-let add=Number(prompt(`Payment from ${s.name} (Remaining ₹${remaining})`))
+if(isNaN(newFee))return
 
-if(isNaN(add))return
+s.monthlyfees=newFee
 
-s.feespaid+=add
-s.feesremaining=s.feestobepaid-s.feespaid
+save()
+renderTeacher()
+
+}
+
+
+/* EDIT FEES TO PAY */
+
+function editFeesToBePaid(i){
+
+const s=teacherData.students[i]
+
+let val=Number(prompt("Enter fees to be paid"))
+
+if(isNaN(val))return
+
+s.feestobepaid=val
+
+save()
+renderTeacher()
+
+}
+
+
+/* ADD PAYMENT */
+
+function addPayment(i){
+
+const s=teacherData.students[i]
+
+let val=Number(prompt("Payment amount"))
+
+if(isNaN(val))return
+
+s.feespaid+=val
 
 s.history.push({
-
 date:new Date().toISOString().split("T")[0],
 type:"payment",
-amount:add
-
+amount:val
 })
 
 save()
@@ -424,25 +431,21 @@ renderTeacher()
 }
 
 
-
 /* HISTORY */
 
 function viewHistory(i){
 
 const s=teacherData.students[i]
 
-let h=`History for ${s.name}\n\n`
+let text="History\n\n"
 
-s.history.forEach((p,j)=>{
-
-h+=`${j+1}. ${p.date} ₹${p.amount} ${p.type}\n`
-
+s.history.forEach((h,j)=>{
+text+=`${j+1}. ${h.date} ₹${h.amount} ${h.type}\n`
 })
 
-alert(h)
+alert(text)
 
 }
-
 
 
 /* DELETE */
@@ -459,57 +462,50 @@ renderTeacher()
 }
 
 
+/* EXPORT BACKUP */
 
-/* PUBLISH */
+function exportBackup(){
 
-function publishAll(){
+const data=JSON.stringify(teacherData)
 
-updateFeeCycles()
-
-const encoded=encodeJSON(JSON.stringify(teacherData.students))
-
-const blob=new Blob([JSON.stringify(encoded)],{type:"application/json"})
+const blob=new Blob([data],{type:"application/json"})
 
 const a=document.createElement("a")
 
 a.href=URL.createObjectURL(blob)
 
-a.download="students.json"
+a.download="tuition_backup.json"
 
 a.click()
 
 }
 
 
+/* IMPORT BACKUP */
 
-/* STUDENT DASHBOARD */
+function importBackup(e){
 
-function renderStudent(){
+const file=e.target.files[0]
 
-fetch("students.json")
+if(!file)return
 
-.then(r=>r.json())
+const reader=new FileReader()
 
-.then(arr=>{
+reader.onload=function(){
 
-const students=JSON.parse(decodeJSON(arr))
+teacherData=JSON.parse(reader.result)
 
-const s=students.find(x=>x.name===loggedStudent)
+save()
 
-document.getElementById("studentTable").innerHTML=`
+renderTeacher()
 
-<tr><th>Name</th><td>${s.name}</td></tr>
-<tr><th>Monthly Fees</th><td>₹${s.monthlyfees}</td></tr>
-<tr><th>To Pay</th><td>₹${s.feestobepaid}</td></tr>
-<tr><th>Paid</th><td>₹${s.feespaid}</td></tr>
-<tr><th>Remaining</th><td>₹${s.feestobepaid-s.feespaid}</td></tr>
-
-`
-
-})
+alert("Backup imported")
 
 }
 
+reader.readAsText(file)
+
+}
 
 
 /* FEE CYCLE */
@@ -534,47 +530,32 @@ s.feespaid=0
 s.feestobepaid=overdue+s.monthlyfees
 s.lastFeeCycle=months
 
-s.history.push({
-
-date:today.toISOString().split("T")[0],
-type:"fee_due",
-amount:s.feestobepaid
-
-})
-
 }
 
 })
 
 }
-
 
 
 /* STORAGE */
 
 function save(){
-
 localStorage.setItem("teacherData",JSON.stringify(teacherData))
-
 }
-
 
 
 /* HELPERS */
 
 function hide(id){
-
 document.getElementById(id).classList.add("hidden")
-
 }
 
 function show(id){
-
 document.getElementById(id).classList.remove("hidden")
-
 }
 
 </script>
 
 </body>
 </html>
+```
