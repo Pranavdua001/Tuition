@@ -63,6 +63,9 @@ style="width:60%;margin-left:20%;margin-bottom:10px;">
     <p id="totalOverpaid">₹0</p>
   </div>
 
+  </div>
+  <div>
+
   <button onclick="setFilter('all')" style="width:180px;background:#ddd;color:black;">
 <h3>Total Students</h3>
   <p id="totalStudents">0</p>
@@ -268,8 +271,11 @@ function editmonthlyfees(i) {
     s.feestobepaid = s.feestobepaid - s.monthlyfees + Number(add);
     s.monthlyfees = Number(add);
 
-  s.history.push({
-  date: new Date().toISOString().split("T")[0],
+  let date = prompt("Enter date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
+if(!date) return;
+
+s.history.push({
+  date: date,
   type: "fee_due",
   amount: add
 });
@@ -297,8 +303,11 @@ function editfeestobepaid(i){
   }
   if(isNaN(add)){ alert("Enter valid amount"); return;}
   s.feestobepaid = add;
-  s.history.push({
-  date: new Date().toISOString().split("T")[0],
+  let date = prompt("Enter date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
+if(!date) return;
+
+s.history.push({
+  date: date,
   type: "fee_due",
   amount: add
 });  save();
@@ -318,8 +327,11 @@ function editFees(i){
 
   s.feespaid += add;
   s.feesremaining = s.feestobepaid - s.feespaid;
+let date = prompt("Enter payment date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
+if(!date) return;
+
 s.history.push({
-  date: new Date().toISOString().split("T")[0],
+  date: date,
   type: "payment",
   amount: add
 });  save();
