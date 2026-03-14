@@ -48,10 +48,10 @@ style="width:60%;margin-left:20%;margin-bottom:10px;">
 </div>
   <div id="insights" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;justify-content:center;">
   
-  <div class="box" style="background:#e2e8f0;width:180px;">
-    <h3>Total Students</h3>
-    <p id="totalStudents">0</p>
-  </div>
+  <button onclick="setFilter('all')" style="width:180px;background:#ddd;color:black;">
+<h3>Total Students</h3>
+  <p id="totalStudents">0</p>
+</button>
 
   <div class="box" style="background:#dcfce7;width:180px;">
     <h3>Total Paid</h3>
@@ -68,17 +68,17 @@ style="width:60%;margin-left:20%;margin-bottom:10px;">
     <p id="totalOverpaid">₹0</p>
   </div>
 
-  <button onclick="setFilter('paid')" style="background:#bbf7d0;width:180px;">
+  <button onclick="setFilter('paid')" style="color:#000000;background:#bbf7d0;width:180px;">
   <h3>Paid Students</h3>
   <p id="paidStudents">0</p>
 </button>
 
-<button onclick="setFilter('unpaid')" style="background:#fecaca;width:180px;">
+<button onclick="setFilter('unpaid')" style="color:#000000;background:#fecaca;width:180px;">
   <h3>Unpaid Students</h3>
   <p id="unpaidStudents">0</p>
 </button>
 
-<button onclick="setFilter('overpaid')" style="background:#fed7aa;width:180px;">
+<button onclick="setFilter('overpaid')" style="color:#000000;background:#fed7aa;width:180px;">
   <h3>Overpaid Students</h3>
   <p id="overpaidStudents">0</p>
 </button>
@@ -194,24 +194,27 @@ function renderTeacher(){
 
   teacherData.students.forEach((s,i)=>{
     if(!s.name.toLowerCase().includes(search)) return;
+
     const remaining = s.feestobepaid - s.feespaid;
 
-let status = "paid";
-if(remaining > 0) status = "unpaid";
-if(remaining < 0) status = "overpaid";
+    let status = "paid";
+    if(remaining > 0) status = "unpaid";
+    if(remaining < 0) status = "overpaid";
 
-if(currentFilter !== "all" && currentFilter !== status) return;
-    if(!s.history) s.history = [];
+    // Insights calculation (ALL students)
+    totalStudents++;
 
-totalStudents++;
+    if(remaining > 0) totalPending += remaining;
+    else if(remaining < 0) totalOverpaid += Math.abs(remaining);
 
-if(remaining > 0) totalPending += remaining;
-else if(remaining < 0) totalOverpaid += Math.abs(remaining);
+    totalPaid += s.feespaid;
 
-totalPaid += s.feespaid;
-if(remaining === 0) paidStudents++;
-else if(remaining > 0) unpaidStudents++;
-else overpaidStudents++;
+    if(remaining === 0) paidStudents++;
+    else if(remaining > 0) unpaidStudents++;
+    else overpaidStudents++;
+
+    // Filter only for table
+    if(currentFilter !== "all" && currentFilter !== status) return;
     html += `<tr>
       <td>${s.name}</td>
       <td>${s.password}</td>
