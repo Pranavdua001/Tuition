@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -114,7 +113,6 @@ overflow-x:auto;
 
 <body>
 
-<!-- LOGIN -->
 <div class="box" id="loginBox">
 <h2>Tuition Login</h2>
 <input id="password" type="password" placeholder="Enter password">
@@ -122,7 +120,6 @@ overflow-x:auto;
 </div>
 
 
-<!-- TEACHER DASHBOARD -->
 <div class="box hidden" id="teacherBox">
 
 <h2>Teacher Dashboard</h2>
@@ -152,11 +149,6 @@ overflow-x:auto;
 <button onclick="addStudent()">Add Student</button>
 <button onclick="publishAll()">Publish Students</button>
 
-<button onclick="exportBackup()">Export Backup</button>
-
-<input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
-<button onclick="document.getElementById('importFile').click()">Import Backup</button>
-
 <div class="table-container">
 <table id="teacherTable"></table>
 </div>
@@ -164,26 +156,25 @@ overflow-x:auto;
 </div>
 
 
-<!-- STUDENT DASHBOARD -->
 <div class="box hidden" id="studentBox">
+
 <h2>Student Dashboard</h2>
+
 <table id="studentTable"></table>
 
 <h3>Payment History</h3>
+
 <table id="studentHistoryTable"></table>
+
 </div>
 
 
 <script>
 
-/* SECURITY */
-
 const TEACHER_PASSWORD="1234"
 const ENCODE_KEY=7
 const ENCODE_MULTIPLIER=4
 
-
-/* ENCODING */
 
 function encodeJSON(str){
 return Array.from(str).map(c=>(c.charCodeAt(0)+ENCODE_KEY)*ENCODE_MULTIPLIER)
@@ -194,13 +185,9 @@ return arr.map(n=>String.fromCharCode((n/ENCODE_MULTIPLIER)-ENCODE_KEY)).join(""
 }
 
 
-/* DATA */
-
 let teacherData=JSON.parse(localStorage.getItem("teacherData"))||{students:[]}
 let loggedStudent=null
 
-
-/* LOGIN */
 
 function login(){
 
@@ -229,7 +216,7 @@ const s=students.find(x=>x.password===pwd)
 
 if(!s){alert("Invalid password");return}
 
-loggedStudent=s.name
+loggedStudent=s
 
 hide("loginBox")
 show("studentBox")
@@ -242,8 +229,6 @@ renderStudent()
 
 }
 
-
-/* ADD STUDENT */
 
 function addStudent(){
 
@@ -264,14 +249,11 @@ name,
 password,
 joiningdate,
 monthlyfees,
-feestobepaid:0,
+feestobepaid:monthlyfees,
 feespaid:0,
-feesremaining:0,
 lastFeeCycle:-1,
 history:[]
 })
-
-updateFeeCycles()
 
 save()
 renderTeacher()
@@ -279,19 +261,7 @@ renderTeacher()
 }
 
 
-/* RENDER TABLE */
-
 function renderTeacher(){
-
-const filter=document.getElementById("statusFilter").value
-const search=document.getElementById("searchStudent").value.toLowerCase()
-
-let totalStudents=0
-let pending=0
-let collected=0
-let unpaid=0
-let paid=0
-let overpaid=0
 
 let html=`<tr>
 <th>Name</th>
@@ -313,24 +283,6 @@ let status="paid"
 if(remaining>0)status="unpaid"
 if(remaining<0)status="overpaid"
 
-if(filter!=="all" && filter!==status)return
-if(search && !s.name.toLowerCase().includes(search))return
-
-totalStudents++
-
-if(remaining>0){
-pending+=remaining
-unpaid++
-}
-else if(remaining===0){
-paid++
-}
-else{
-overpaid++
-}
-
-collected+=s.feespaid
-
 html+=`
 <tr>
 <td>${s.name}</td>
@@ -343,15 +295,7 @@ html+=`
 <td class="${status}">${status}</td>
 <td>
 
-<button class="innerbutton" onclick="editMonthlyFees(${i})">Edit Monthly</button>
-
-<button class="innerbutton" onclick="editFeesToBePaid(${i})">Edit To Pay</button>
-
 <button class="innerbutton" onclick="addPayment(${i})">Add Payment</button>
-
-<button class="innerbutton" onclick="viewHistory(${i})">History</button>
-
-<button class="innerbutton" onclick="delStudent(${i})">Delete</button>
 
 </td>
 </tr>
@@ -361,53 +305,8 @@ html+=`
 
 document.getElementById("teacherTable").innerHTML=html
 
-document.getElementById("totalStudents").innerText="Students:"+totalStudents
-document.getElementById("pendingFees").innerText="Pending:₹"+pending
-document.getElementById("collectedFees").innerText="Collected:₹"+collected
-document.getElementById("unpaidStudents").innerText="Unpaid:"+unpaid
-document.getElementById("paidStudents").innerText="Paid:"+paid
-document.getElementById("overpaidStudents").innerText="Overpaid:"+overpaid
-
 }
 
-
-/* EDIT MONTHLY */
-
-function editMonthlyFees(i){
-
-const s=teacherData.students[i]
-
-let newFee=Number(prompt("New monthly fee"))
-
-if(isNaN(newFee))return
-
-s.monthlyfees=newFee
-
-save()
-renderTeacher()
-
-}
-
-
-/* EDIT FEES TO PAY */
-
-function editFeesToBePaid(i){
-
-const s=teacherData.students[i]
-
-let val=Number(prompt("Enter fees to be paid"))
-
-if(isNaN(val))return
-
-s.feestobepaid=val
-
-save()
-renderTeacher()
-
-}
-
-
-/* ADD PAYMENT */
 
 function addPayment(i){
 
@@ -421,7 +320,6 @@ s.feespaid+=val
 
 s.history.push({
 date:new Date().toISOString().split("T")[0],
-type:"payment",
 amount:val
 })
 
@@ -431,84 +329,81 @@ renderTeacher()
 }
 
 
-/* HISTORY */
+function renderStudent(){
 
-function viewHistory(i){
+const s=loggedStudent
 
-const s=teacherData.students[i]
+const remaining=s.feestobepaid-s.feespaid
 
-let text="History\n\n"
+let html=`
+<tr>
+<th>Name</th>
+<th>Monthly Fee</th>
+<th>Total To Pay</th>
+<th>Paid</th>
+<th>Remaining</th>
+</tr>
 
-s.history.forEach((h,j)=>{
-text+=`${j+1}. ${h.date} ₹${h.amount} ${h.type}\n`
+<tr>
+<td>${s.name}</td>
+<td>₹${s.monthlyfees}</td>
+<td>₹${s.feestobepaid}</td>
+<td>₹${s.feespaid}</td>
+<td>₹${remaining}</td>
+</tr>
+`
+
+document.getElementById("studentTable").innerHTML=html
+
+
+let historyHTML=`
+<tr>
+<th>Date</th>
+<th>Amount</th>
+</tr>
+`
+
+s.history.forEach(h=>{
+
+historyHTML+=`
+<tr>
+<td>${h.date}</td>
+<td>₹${h.amount}</td>
+</tr>
+`
+
 })
 
-alert(text)
+document.getElementById("studentHistoryTable").innerHTML=historyHTML
 
 }
 
 
-/* DELETE */
+function publishAll(){
 
-function delStudent(i){
+const json=JSON.stringify(teacherData.students)
 
-if(!confirm("Delete student?"))return
+const encoded=encodeJSON(json)
 
-teacherData.students.splice(i,1)
-
-save()
-renderTeacher()
-
-}
-
-
-/* EXPORT BACKUP */
-
-function exportBackup(){
-
-const data=JSON.stringify(teacherData)
-
-const blob=new Blob([data],{type:"application/json"})
+const blob=new Blob([JSON.stringify(encoded)],{type:"application/json"})
 
 const a=document.createElement("a")
 
 a.href=URL.createObjectURL(blob)
 
-a.download="tuition_backup.json"
+a.download="students.json"
 
 a.click()
 
-}
-
-
-/* IMPORT BACKUP */
-
-function importBackup(e){
-
-const file=e.target.files[0]
-
-if(!file)return
-
-const reader=new FileReader()
-
-reader.onload=function(){
-
-teacherData=JSON.parse(reader.result)
-
-save()
-
-renderTeacher()
-
-alert("Backup imported")
-
-}
-
-reader.readAsText(file)
+alert("Upload the downloaded students.json to your website folder")
 
 }
 
 
-/* FEE CYCLE */
+function save(){
+localStorage.setItem("teacherData",JSON.stringify(teacherData))
+}
+
 
 function updateFeeCycles(){
 
@@ -537,15 +432,6 @@ s.lastFeeCycle=months
 }
 
 
-/* STORAGE */
-
-function save(){
-localStorage.setItem("teacherData",JSON.stringify(teacherData))
-}
-
-
-/* HELPERS */
-
 function hide(id){
 document.getElementById(id).classList.add("hidden")
 }
@@ -558,4 +444,3 @@ document.getElementById(id).classList.remove("hidden")
 
 </body>
 </html>
-```
