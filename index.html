@@ -9,7 +9,7 @@ body{font-family:Arial, sans-serif;background:#564100;margin:0;padding:20px;}
 h2,h3{text-align:center;margin:2vh;margin-top:3vh;padding:0;color: #a02525;margin-bottom:3vh;}
 .box{max-width:1000px;margin:auto;background:#ffd552;padding:20px;border-radius:10px;margin-bottom:20px;}
 input,button,textarea{width:80%;margin-left:10%;padding:10px;margin-top:10px;border-radius:5px;border:1px solid #ccc;}
-button,.innerbutton{background:#2563eb;color:#fff;border:none;cursor:pointer;margin-bottom: 2vh;}
+button,.innerbutton{background:#2563eb;color:#fff;border:none;cursor:pointer;margin-bottom: 2vh;margin-left:24px;margin-right:24px;}
 button:hover{opacity:0.9;}
 table{width:100%;border-collapse:collapse;margin-top:15px;background:#ffffff;}
 th,td{border:1px solid #ddd;padding:8px;text-align:center;}
@@ -34,12 +34,13 @@ textarea{resize:none;}
 <!-- TEACHER DASHBOARD -->
 <div class="box hidden" id="teacherBox">
   <h2>Teacher Dashboard</h2>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:10px;">
+
   <input 
 id="searchStudent" 
 placeholder="Search student by name..." 
 oninput="renderTeacher()" 
 style="width:60%;margin-left:20%;margin-bottom:10px;">
-  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:10px;">
 
   <button onclick="addStudent()" style="width:auto;margin:0;padding:6px 12px;">Add New Student</button>
 
@@ -471,28 +472,30 @@ function updateFeeCycles() {
       return;
     }
 
-    if (monthsPassed > s.lastFeeCycle) {
-      console.log("✅ FEE RECYCLE TRIGGERED");
+  if (monthsPassed > s.lastFeeCycle) {
 
-      const overdue = s.feestobepaid - s.feespaid;
-      console.log("Overdue amount:", overdue);
+  const joining = new Date(s.joiningdate);
 
-      s.feespaid = 0;
-      s.feestobepaid = overdue + s.monthlyfees;
-      s.feesremaining = s.feestobepaid;
-      s.lastFeeCycle = monthsPassed;
+  for(let m = s.lastFeeCycle + 1; m <= monthsPassed; m++){
 
-      console.log("New fees to be paid:", s.feestobepaid);
-      console.log("New lastFeeCycle:", s.lastFeeCycle);
+    const cycleDate = new Date(joining);
+    cycleDate.setMonth(joining.getMonth() + m);
 
-      s.history.push({
-        date: today.toISOString().split("T")[0],
-        type: "fee_due",
-        amount: s.feestobepaid
-      });
+    const overdue = s.feestobepaid - s.feespaid;
 
-      console.log("📌 History entry added");
-    } else {
+    s.feespaid = 0;
+    s.feestobepaid = overdue + s.monthlyfees;
+    s.feesremaining = s.feestobepaid;
+
+    s.history.push({
+      date: cycleDate.toISOString().split("T")[0],
+      type: "fee_due",
+      amount: s.feestobepaid
+    });
+  }
+
+  s.lastFeeCycle = monthsPassed;
+} else {
       console.log("❌ NO RECYCLE (monthsPassed <= lastFeeCycle)");
     }
   });
