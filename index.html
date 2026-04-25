@@ -112,89 +112,163 @@
 </div>
 
 <script>
+
 const TEACHER_PASSWORD = "1234";
 const ENCODE_KEY = 7;
 const ENCODE_MULTIPLIER = 4;
 
 function encodeJSON(str) {
-  return Array.from(str).map(c => (c.charCodeAt(0) + ENCODE_KEY) * ENCODE_MULTIPLIER);
-}
-function decodeJSON(arr) {
-  return arr.map(n => String.fromCharCode((n / ENCODE_MULTIPLIER) - ENCODE_KEY)).join("");
+  return Array.from(str).map(function(c) {
+    return (c.charCodeAt(0) + ENCODE_KEY) * ENCODE_MULTIPLIER;
+  });
 }
 
-let teacherData = JSON.parse(localStorage.getItem("teacherData")) || { students: [] };
-let loggedStudent = null;
-let currentFilter = "all";
+function decodeJSON(arr) {
+  return arr.map(function(n) {
+    return String.fromCharCode((n / ENCODE_MULTIPLIER) - ENCODE_KEY);
+  }).join("");
+}
+
+var teacherData = JSON.parse(localStorage.getItem("teacherData")) || { students: [] };
+var loggedStudent = null;
+var currentFilter = "all";
 
 /* ── LOGIN ── */
 function login() {
-  const pwd = document.getElementById("password").value;
+  var pwd = document.getElementById("password").value;
+
   if (pwd === TEACHER_PASSWORD) {
-    hide("loginBox"); show("teacherBox");
-    updateFeeCycles(); renderTeacher();
+    hide("loginBox");
+    show("teacherBox");
+    updateFeeCycles();
+    renderTeacher();
     return;
   }
+
   fetch("students.json?v=" + Date.now())
-    .then(r => { if (!r.ok) throw "no-data"; return r.json(); })
-    .then(arr => {
-      const students = JSON.parse(decodeJSON(arr));
-      const s = students.find(x => x.password === pwd);
+    .then(function(r) {
+      if (!r.ok) throw "no-data";
+      return r.json();
+    })
+    .then(function(arr) {
+      var students = JSON.parse(decodeJSON(arr));
+      var s = null;
+      for (var i = 0; i < students.length; i++) {
+        if (students[i].password === pwd) { s = students[i]; break; }
+      }
       if (!s) { alert("Invalid password"); return; }
       loggedStudent = s.name;
-      hide("loginBox"); show("studentBox");
-      updateFeeCycles(); renderStudent();
+      hide("loginBox");
+      show("studentBox");
+      updateFeeCycles();
+      renderStudent();
     })
-    .catch(() => alert("Student data not available. Ask teacher to publish."));
+    .catch(function() {
+      alert("Student data not available. Ask teacher to publish.");
+    });
 }
 
 /* ── ADD STUDENT ── */
 function addStudent() {
-  const name = prompt("Enter student name:"); if (!name) return;
-  const password = prompt("Enter student password:"); if (!password) return;
-  const joiningdate = prompt("Enter joining date (YYYY-MM-DD):"); if (!joiningdate) return;
-  const monthlyfees = Number(prompt("Enter monthly fees:")); if (isNaN(monthlyfees)) return;
-  teacherData.students.push({ name, password, joiningdate, monthlyfees, feestobepaid: 0, feespaid: 0, feesremaining: 0, lastFeeCycle: -1, history: [] });
-  updateFeeCycles(); save(); renderTeacher();
+  var name = prompt("Enter student name:");
+  if (!name) return;
+
+  var password = prompt("Enter student password:");
+  if (!password) return;
+
+  // Check for duplicate password
+  var duplicate = null;
+  for (var k = 0; k < teacherData.students.length; k++) {
+    if (teacherData.students[k].password === password) {
+      duplicate = teacherData.students[k];
+      break;
+    }
+  }
+  if (duplicate) {
+    alert('Password "' + password + '" is already used by "' + duplicate.name + '". Please choose a unique password.');
+    return;
+  }
+
+  var joiningdate = prompt("Enter joining date (YYYY-MM-DD):");
+  if (!joiningdate) return;
+
+  var monthlyfees = Number(prompt("Enter monthly fees:"));
+  if (isNaN(monthlyfees)) return;
+
+  teacherData.students.push({
+    name: name,
+    password: password,
+    joiningdate: joiningdate,
+    monthlyfees: monthlyfees,
+    feestobepaid: 0,
+    feespaid: 0,
+    feesremaining: 0,
+    lastFeeCycle: -1,
+    history: []
+  });
+
+  updateFeeCycles();
+  save();
+  renderTeacher();
 }
 
 /* ── RENDER TEACHER TABLE ── */
 function renderTeacher() {
-  const search = document.getElementById("searchStudent")?.value.toLowerCase() || "";
-  let totalStudents=0, totalPaid=0, totalPending=0, totalOverpaid=0, paidStudents=0, unpaidStudents=0, overpaidStudents=0;
+  var search = (document.getElementById("searchStudent") ? document.getElementById("searchStudent").value.toLowerCase() : "");
 
-  let html = `<tr><th>Name</th><th>Password</th><th>Joining Date</th><th>Monthly Fees</th><th>To Be Paid</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>`;
+  var totalStudents  = 0;
+  var totalPaid      = 0;
+  var totalPending   = 0;
+  var totalOverpaid  = 0;
+  var paidStudents   = 0;
+  var unpaidStudents = 0;
+  var overpaidStudents = 0;
 
-  teacherData.students.forEach((s, i) => {
-    if (!s.name.toLowerCase().includes(search)) return;
-    const remaining = s.feestobepaid - s.feespaid;
-    const status = remaining > 0 ? "unpaid" : remaining < 0 ? "overpaid" : "paid";
+  var html = '<tr><th>Name</th><th>Password</th><th>Joining Date</th><th>Monthly Fees</th><th>To Be Paid</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>';
 
-    totalStudents++;
-    totalPaid += s.feespaid;
-    if (remaining > 0)      { totalPending  += remaining;           unpaidStudents++;   }
-    else if (remaining < 0) { totalOverpaid += Math.abs(remaining); overpaidStudents++; }
-    else                    { paidStudents++; }
+  for (var i = 0; i < teacherData.students.length; i++) {
+    var s = teacherData.students[i];
 
-    if (currentFilter !== "all" && currentFilter !== status) return;
+    if (s.name.toLowerCase().indexOf(search) === -1) continue;
 
-    html += `<tr>
-      <td>${s.name}</td>
-      <td>${s.password}</td>
-      <td>${s.joiningdate}</td>
-      <td>₹${s.monthlyfees} <button class="edit-btn" onclick="editmonthlyfees(${i})" title="Edit">✏️</button></td>
-      <td>₹${s.feestobepaid} <button class="edit-btn" onclick="editfeestobepaid(${i})" title="Edit">✏️</button></td>
-      <td>₹${s.feespaid} <button class="edit-btn" onclick="editFees(${i})" title="Edit">✏️</button></td>
-      <td>₹${remaining}</td>
-      <td class="${status}">${status.charAt(0).toUpperCase()+status.slice(1)}</td>
-      <td>
-        <div class="actions">
-          <button class="innerbutton" onclick="viewHistory(${i})">History</button>
-          <button class="innerbutton" onclick="delStudent(${i})">Delete</button>
-        </div>
-      </td>
-    </tr>`;
-  });
+    var remaining = s.feestobepaid - s.feespaid;
+    var status = remaining > 0 ? "unpaid" : remaining < 0 ? "overpaid" : "paid";
+
+    // Count underscores: "x_y" = 2 students, "x_y_z" = 3 students
+    var headCount = s.name.split("_").length;
+
+    totalStudents += headCount;
+    totalPaid     += s.feespaid;
+
+    if (remaining > 0) {
+      totalPending   += remaining;
+      unpaidStudents += headCount;
+    } else if (remaining < 0) {
+      totalOverpaid   += Math.abs(remaining);
+      overpaidStudents += headCount;
+    } else {
+      paidStudents += headCount;
+    }
+
+    if (currentFilter !== "all" && currentFilter !== status) continue;
+
+    var statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+
+    html += '<tr>';
+    html += '<td>' + s.name + '</td>';
+    html += '<td>' + s.password + '</td>';
+    html += '<td>' + s.joiningdate + '</td>';
+    html += '<td>₹' + s.monthlyfees + ' <button class="edit-btn" onclick="editmonthlyfees(' + i + ')" title="Edit">✏️</button></td>';
+    html += '<td>₹' + s.feestobepaid + ' <button class="edit-btn" onclick="editfeestobepaid(' + i + ')" title="Edit">✏️</button></td>';
+    html += '<td>₹' + s.feespaid + ' <button class="edit-btn" onclick="editFees(' + i + ')" title="Edit">✏️</button></td>';
+    html += '<td>₹' + remaining + '</td>';
+    html += '<td class="' + status + '">' + statusLabel + '</td>';
+    html += '<td><div class="actions">';
+    html += '<button class="innerbutton" onclick="viewHistory(' + i + ')">History</button>';
+    html += '<button class="innerbutton" onclick="delStudent(' + i + ')">Delete</button>';
+    html += '</div></td>';
+    html += '</tr>';
+  }
 
   document.getElementById("teacherTable").innerHTML = html;
   document.getElementById("totalStudents").innerText    = totalStudents;
@@ -206,88 +280,101 @@ function renderTeacher() {
   document.getElementById("overpaidStudents").innerText = overpaidStudents;
 }
 
-/* ── EDIT FUNCTIONS ── */
+/* ── EDIT MONTHLY FEES ── */
 function editmonthlyfees(i) {
-  const s = teacherData.students[i]; if (!s) return;
-  s.history ??= [];
-  let add = prompt(`New monthly fees for ${s.name} (prev: ₹${s.monthlyfees})`);
+  var s = teacherData.students[i];
+  if (!s) return;
+  if (!s.history) s.history = [];
+  var add = prompt("New monthly fees for " + s.name + " (prev: ₹" + s.monthlyfees + ")");
   if (add === null || isNaN(add)) return;
   s.feestobepaid = s.feestobepaid - s.monthlyfees + Number(add);
   s.monthlyfees = Number(add);
-  let date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
+  var date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
   if (!date) return;
-  s.history.push({ date, type: "fee_due", amount: add });
-  save(); renderTeacher();
+  s.history.push({ date: date, type: "fee_due", amount: add });
+  save();
+  renderTeacher();
 }
 
+/* ── EDIT FEES TO BE PAID ── */
 function editfeestobepaid(i) {
-  const s = teacherData.students[i]; if (!s) return;
-  s.history ??= [];
-  let add = prompt(`Fees to be paid by ${s.name} (monthly: ₹${s.monthlyfees})`);
+  var s = teacherData.students[i];
+  if (!s) return;
+  if (!s.history) s.history = [];
+  var add = prompt("Fees to be paid by " + s.name + " (monthly: ₹" + s.monthlyfees + ")");
   if (add === null) return;
   add = Number(add);
   if (isNaN(add)) { alert("Enter valid amount"); return; }
-  for (let j = s.history.length - 1; j >= 0; j--) {
+  for (var j = s.history.length - 1; j >= 0; j--) {
     if (s.history[j].type === "fee_due") { s.history.splice(j, 1); break; }
   }
   s.feestobepaid = add;
-  let date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
+  var date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
   if (!date) return;
-  s.history.push({ date, type: "fee_due", amount: add });
-  save(); renderTeacher();
+  s.history.push({ date: date, type: "fee_due", amount: add });
+  save();
+  renderTeacher();
 }
 
+/* ── EDIT FEES PAID ── */
 function editFees(i) {
-  const s = teacherData.students[i]; if (!s) return;
-  s.history ??= [];
-  const remaining = s.feestobepaid - s.feespaid;
-  let add = prompt(`Amount paid by ${s.name} (remaining: ₹${remaining})`);
+  var s = teacherData.students[i];
+  if (!s) return;
+  if (!s.history) s.history = [];
+  var remaining = s.feestobepaid - s.feespaid;
+  var add = prompt("Amount paid by " + s.name + " (remaining: ₹" + remaining + ")");
   if (add === null) return;
   add = Number(add);
   if (isNaN(add)) { alert("Enter valid amount"); return; }
   s.feespaid += add;
   s.feesremaining = s.feestobepaid - s.feespaid;
-  let date = prompt("Payment date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
+  var date = prompt("Payment date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
   if (!date) return;
-  s.history.push({ date, type: "payment", amount: add });
-  save(); renderTeacher();
+  s.history.push({ date: date, type: "payment", amount: add });
+  save();
+  renderTeacher();
 }
 
+/* ── VIEW HISTORY ── */
 function viewHistory(i) {
-  const s = teacherData.students[i];
+  var s = teacherData.students[i];
   if (!s) { alert("Student not found"); return; }
   if (!s.history || s.history.length === 0) { alert("No history available."); return; }
-  let h = `History for ${s.name}:\n\n`;
-  s.history.forEach((p, j) => {
-    if (p.type === "fee_due")      h += `${j+1}. ${p.date} - ₹${p.amount} - Fees due\n`;
-    else if (p.type === "payment") h += `${j+1}. ${p.date} - ₹${p.amount} - Payment\n`;
-  });
+  var h = "History for " + s.name + ":\n\n";
+  for (var j = 0; j < s.history.length; j++) {
+    var p = s.history[j];
+    if (p.type === "fee_due")   h += (j+1) + ". " + p.date + " - ₹" + p.amount + " - Fees due\n";
+    if (p.type === "payment")   h += (j+1) + ". " + p.date + " - ₹" + p.amount + " - Payment\n";
+  }
   alert(h);
 }
 
+/* ── DELETE STUDENT ── */
 function delStudent(i) {
-  const s = teacherData.students[i]; if (!s) return;
-  if (!confirm(`Delete student ${s.name}?`)) return;
+  var s = teacherData.students[i];
+  if (!s) return;
+  if (!confirm("Delete student " + s.name + "?")) return;
   teacherData.students.splice(i, 1);
-  save(); renderTeacher();
+  save();
+  renderTeacher();
 }
 
 /* ── PUBLISH ── */
 function publishAll() {
   updateFeeCycles();
-  const encoded = encodeJSON(JSON.stringify(teacherData.students));
-  const blob = new Blob([JSON.stringify(encoded)], { type: "application/json" });
-  const a = document.createElement("a");
+  var encoded = encodeJSON(JSON.stringify(teacherData.students));
+  var blob = new Blob([JSON.stringify(encoded)], { type: "application/json" });
+  var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "students.json";
   a.click();
   alert("students.json downloaded — upload or share it.");
 }
 
-/* ── EXPORT DATA (full backup) ── */
+/* ── EXPORT DATA ── */
 function exportData() {
-  const blob = new Blob([JSON.stringify(teacherData, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
+  var blob = new Blob([JSON.stringify(teacherData, null, 2)], { type: "application/json" });
+  var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "tuition-backup-" + new Date().toISOString().split("T")[0] + ".json";
   a.click();
@@ -296,23 +383,23 @@ function exportData() {
 
 /* ── IMPORT DATA ── */
 function importData(event) {
-  const file = event.target.files[0];
+  var file = event.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const imported = JSON.parse(e.target.result);
+      var imported = JSON.parse(e.target.result);
       if (!imported.students || !Array.isArray(imported.students)) {
         alert("Invalid file. Please use a valid tuition backup.");
         return;
       }
-      if (!confirm(`Replace all current data with ${imported.students.length} student(s) from backup? This cannot be undone.`)) return;
+      if (!confirm("Replace all current data with " + imported.students.length + " student(s) from backup? This cannot be undone.")) return;
       teacherData = imported;
       save();
       updateFeeCycles();
       renderTeacher();
       alert("Data imported successfully!");
-    } catch {
+    } catch(err) {
       alert("Failed to read file. Make sure it's a valid JSON backup.");
     }
   };
@@ -323,76 +410,89 @@ function importData(event) {
 /* ── STUDENT DASHBOARD ── */
 function renderStudent() {
   fetch("students.json")
-    .then(r => r.json())
-    .then(arr => {
-      const students = JSON.parse(decodeJSON(arr));
-      const s = students.find(x => x.name === loggedStudent);
+    .then(function(r) { return r.json(); })
+    .then(function(arr) {
+      var students = JSON.parse(decodeJSON(arr));
+      var s = null;
+      for (var i = 0; i < students.length; i++) {
+        if (students[i].name === loggedStudent) { s = students[i]; break; }
+      }
       if (!s) throw 0;
-      s.history ??= [];
-      const remaining = s.feestobepaid - s.feespaid;
-      const statusClass = remaining === 0 ? "paid" : remaining > 0 ? "unpaid" : "overpaid";
-      const statusText  = remaining === 0 ? "Paid" : remaining > 0 ? "Unpaid" : "Overpaid";
+      if (!s.history) s.history = [];
+      var remaining = s.feestobepaid - s.feespaid;
+      var statusClass = remaining === 0 ? "paid" : remaining > 0 ? "unpaid" : "overpaid";
+      var statusText  = remaining === 0 ? "Paid" : remaining > 0 ? "Unpaid" : "Overpaid";
 
-      document.getElementById("studentTable").innerHTML = `
-        <tr><th>Name</th><td>${s.name}</td></tr>
-        <tr><th>Joining Date</th><td>${s.joiningdate}</td></tr>
-        <tr><th>Monthly Fees</th><td>₹${s.monthlyfees}</td></tr>
-        <tr><th>Fees to be Paid</th><td>₹${s.feestobepaid}</td></tr>
-        <tr><th>Fees Paid</th><td>₹${s.feespaid}</td></tr>
-        <tr><th>Fees Remaining</th><td>₹${remaining}</td></tr>
-        <tr><th>Status</th><td class="${statusClass}">${statusText}</td></tr>`;
+      document.getElementById("studentTable").innerHTML =
+        '<tr><th>Name</th><td>' + s.name + '</td></tr>' +
+        '<tr><th>Joining Date</th><td>' + s.joiningdate + '</td></tr>' +
+        '<tr><th>Monthly Fees</th><td>₹' + s.monthlyfees + '</td></tr>' +
+        '<tr><th>Fees to be Paid</th><td>₹' + s.feestobepaid + '</td></tr>' +
+        '<tr><th>Fees Paid</th><td>₹' + s.feespaid + '</td></tr>' +
+        '<tr><th>Fees Remaining</th><td>₹' + remaining + '</td></tr>' +
+        '<tr><th>Status</th><td class="' + statusClass + '">' + statusText + '</td></tr>';
 
-      let historyHTML = `<tr><th>#</th><th>Date</th><th>Fees Due</th><th>Payment</th></tr>`;
+      var historyHTML = '<tr><th>#</th><th>Date</th><th>Fees Due</th><th>Payment</th></tr>';
       if (s.history.length === 0) {
-        historyHTML += `<tr><td colspan="4">No payments yet</td></tr>`;
+        historyHTML += '<tr><td colspan="4">No payments yet</td></tr>';
       } else {
-        s.history.forEach((p, j) => {
-          historyHTML += `<tr>
-            <td>${j+1}</td><td>${p.date}</td>
-            <td>${p.type === "fee_due" ? "₹" + p.amount : ""}</td>
-            <td>${p.type === "payment" ? "₹" + p.amount : ""}</td>
-          </tr>`;
-        });
+        for (var j = 0; j < s.history.length; j++) {
+          var p = s.history[j];
+          historyHTML += '<tr><td>' + (j+1) + '</td><td>' + p.date + '</td>';
+          historyHTML += '<td>' + (p.type === "fee_due" ? "₹" + p.amount : "") + '</td>';
+          historyHTML += '<td>' + (p.type === "payment" ? "₹" + p.amount : "") + '</td></tr>';
+        }
       }
       document.getElementById("studentHistoryTable").innerHTML = historyHTML;
     })
-    .catch(() => document.getElementById("studentTable").innerHTML = "<tr><td>No data published yet</td></tr>");
+    .catch(function() {
+      document.getElementById("studentTable").innerHTML = "<tr><td>No data published yet</td></tr>";
+    });
 }
 
 /* ── FEE CYCLES ── */
 function updateFeeCycles() {
-  const today = new Date();
-  teacherData.students.forEach(s => {
-    s.history ??= [];
-    s.lastFeeCycle ??= -1;
-    s.feestobepaid ??= 0;
-    s.feespaid ??= 0;
-    const joining = new Date(s.joiningdate);
-    let monthsPassed =
+  var today = new Date();
+  for (var idx = 0; idx < teacherData.students.length; idx++) {
+    var s = teacherData.students[idx];
+    if (!s.history) s.history = [];
+    if (s.lastFeeCycle === undefined || s.lastFeeCycle === null) s.lastFeeCycle = -1;
+    if (!s.feestobepaid) s.feestobepaid = 0;
+    if (!s.feespaid) s.feespaid = 0;
+
+    var joining = new Date(s.joiningdate);
+    var monthsPassed =
       (today.getFullYear() - joining.getFullYear()) * 12 +
       (today.getMonth() - joining.getMonth());
+
     if (today.getDate() < joining.getDate()) monthsPassed--;
-    if (monthsPassed < 0) return;
+    if (monthsPassed < 0) continue;
+
     if (monthsPassed > s.lastFeeCycle) {
-      for (let m = s.lastFeeCycle + 1; m <= monthsPassed; m++) {
-        const cycleDate = new Date(joining);
+      for (var m = s.lastFeeCycle + 1; m <= monthsPassed; m++) {
+        var cycleDate = new Date(joining);
         cycleDate.setMonth(joining.getMonth() + m);
-        const overdue = s.feestobepaid - s.feespaid;
+        var overdue = s.feestobepaid - s.feespaid;
         s.feespaid = 0;
         s.feestobepaid = overdue + s.monthlyfees;
         s.feesremaining = s.feestobepaid;
-        s.history.push({ date: cycleDate.toISOString().split("T")[0], type: "fee_due", amount: s.feestobepaid });
+        s.history.push({
+          date: cycleDate.toISOString().split("T")[0],
+          type: "fee_due",
+          amount: s.feestobepaid
+        });
       }
       s.lastFeeCycle = monthsPassed;
     }
-  });
+  }
 }
 
 /* ── HELPERS ── */
-function save()     { localStorage.setItem("teacherData", JSON.stringify(teacherData)); }
-function hide(id)   { document.getElementById(id).classList.add("hidden"); }
-function show(id)   { document.getElementById(id).classList.remove("hidden"); }
+function save()      { localStorage.setItem("teacherData", JSON.stringify(teacherData)); }
+function hide(id)    { document.getElementById(id).classList.add("hidden"); }
+function show(id)    { document.getElementById(id).classList.remove("hidden"); }
 function setFilter(f){ currentFilter = f; renderTeacher(); }
+
 </script>
 </body>
 </html>
