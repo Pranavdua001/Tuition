@@ -80,8 +80,8 @@
     <input id="searchStudent" placeholder="Search student by name…" oninput="renderTeacher()">
     <button onclick="addStudent()">+ Add Student</button>
     <button onclick="publishAll()">Publish All</button>
-    <button onclick="exportData()">Export</button>
-    <button onclick="document.getElementById('importInput').click()">Import</button>
+    <button onclick="exportData()" style="background:#16a34a;">Export</button>
+    <button onclick="document.getElementById('importInput').click()" style="background:#7c3aed;">Import</button>
     <input type="file" id="importInput" accept=".json" style="display:none;" onchange="importData(event)">
   </div>
 
@@ -92,10 +92,10 @@
   </div>
 
   <div class="cards-row" style="margin-bottom:16px;">
-    <div class="card clickable" style="background:#e2e8f0;" onclick="setFilter('all')"><h3>Students</h3><p id="totalStudents">0</p></div>
-    <div class="card clickable" style="background:#bbf7d0;" onclick="setFilter('paid')"><h3>Paid Students</h3><p id="paidStudents">0</p></div>
-    <div class="card clickable" style="background:#fecaca;" onclick="setFilter('unpaid')"><h3>Unpaid Students</h3><p id="unpaidStudents">0</p></div>
-    <div class="card clickable" style="background:#fed7aa;" onclick="setFilter('overpaid')"><h3>Overpaid Students</h3><p id="overpaidStudents">0</p></div>
+    <div class="card clickable" style="background:#e2e8f0;" onclick="setFilter('all')"><h3>All Students</h3><p id="totalStudents">0</p></div>
+    <div class="card clickable" style="background:#bbf7d0;" onclick="setFilter('paid')"><h3>Paid</h3><p id="paidStudents">0</p></div>
+    <div class="card clickable" style="background:#fecaca;" onclick="setFilter('unpaid')"><h3>Unpaid</h3><p id="unpaidStudents">0</p></div>
+    <div class="card clickable" style="background:#fed7aa;" onclick="setFilter('overpaid')"><h3>Overpaid</h3><p id="overpaidStudents">0</p></div>
   </div>
 
   <div class="table-wrap">
