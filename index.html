@@ -235,6 +235,10 @@ function editmonthlyfees(i) {
   s.monthlyfees = Number(add);
   var date = prompt("Date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
   if (!date) return;
+  // Delete the previous fee_due entry from history before adding the new one
+  for (var j = s.history.length - 1; j >= 0; j--) {
+    if (s.history[j].type === "fee_due") { s.history.splice(j, 1); break; }
+  }
   s.history.push({ date: date, type: "fee_due", amount: add });
   save(); renderTeacher();
 }
