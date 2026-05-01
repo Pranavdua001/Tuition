@@ -391,7 +391,7 @@ function updateFeeCycles() {
         s.feespaid = 0;
         s.feestobepaid = overdue + s.monthlyfees;
         s.feesremaining = s.feestobepaid;
-        s.history.push({ date: cycleDate.toISOString().split("T")[0], type: "fee_due", amount: s.feestobepaid });
+        s.history.push({ date: cycleDate.toISOString().split("T")[0], type: "fee_due", amount: s.monthlyfees });
       }
       s.lastFeeCycle = monthsPassed;
     }
