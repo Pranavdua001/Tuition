@@ -319,6 +319,7 @@ function editfeestobepaid(i) {
 function editFees(i) {
   var s = teacherData.students[i];
   if (!s) return;
+  var remaining = s.feestobepaid - s.feespaid;
 
   if (!s.history) s.history = [];
 
