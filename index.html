@@ -502,6 +502,18 @@ function updateFeeCycles() {
   }
 }
 
+function recalculateStudent(s) {
+  var due = 0, paid = 0;
+  for (var i = 0; i < s.history.length; i++) {
+    var h = s.history[i];
+    if (h.type === "fee_due") due += Number(h.amount);
+    if (h.type === "payment") paid += Number(h.amount);
+  }
+  s.feestobepaid = due;
+  s.feespaid = paid;
+  s.feesremaining = due - paid;
+}
+
 function populateHistoryMonths() {
   var select = document.getElementById("historyMonth");
 
