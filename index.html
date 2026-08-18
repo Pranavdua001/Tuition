@@ -504,35 +504,6 @@ function updateFeeCycles() {
   }
 }
 
-function populateHistoryMonths(s) {
-  var select = document.getElementById("historyMonth");
-
-  if (!select) return;
-
-  select.innerHTML = '<option value="lifetime">Lifetime</option>';
-
-  var months = {};
-
-  for (var i = 0; i < s.history.length; i++) {
-    var date = s.history[i].date;
-
-    if (!date) continue;
-
-    // YYYY-MM
-    var monthValue = date.substring(0, 7);
-
-    months[monthValue] = true;
-  }
-
-  var monthList = Object.keys(months);
-  monthList.sort();
-
-  for (var j = 0; j < monthList.length; j++) {
-
-    var value = monthList[j];
-
-    var parts = value.split("
-
 function populateHistoryMonths() {
   var select = document.getElementById("historyMonth");
 
