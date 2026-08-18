@@ -520,7 +520,7 @@ function populateHistoryMonths() {
 
   if (!select) return;
 
-  select.innerHTML = '<option value="lifetime">Lifetime</option>';
+  select.innerHTML = '<option value="overall">Overall</option>';
 
   var months = {};
 
@@ -582,7 +582,7 @@ function populateHistoryMonths() {
     for (var j = 0; j < s.history.length; j++) {
       var h = s.history[j];
       if (!h.date) continue;
-      if (selected !== "lifetime" && h.date.substring(0, 7) !== selected) continue;
+      if (selected !== "overall" && h.date.substring(0, 7) !== selected) continue;
 
       if (h.type === "fee_due") totalDue += Number(h.amount);
       if (h.type === "payment") totalPaid += Number(h.amount);
