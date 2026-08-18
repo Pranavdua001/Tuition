@@ -88,10 +88,6 @@
   </select>
 </div>
 
-<div class="table-wrap">
-  <table id=<"TeacherHistoryTable"></table>
-</div>
-
   <!-- 4 SMART CARDS -->
   <div class="cards-row">
     <div class="card clickable" style="background:#e2e8f0;" onclick="setFilter('all')">
@@ -125,8 +121,6 @@
 <div class="box hidden" id="studentBox">
   <h2>Student Dashboard</h2>
   <div class="table-wrap"><table id="studentTable"></table></div>
-  <h3 style="margin:16px 0 8px;">Payment History</h3>
-  <div class="table-wrap"><table id="studentHistoryTable"></table></div>
 </div>
 
 <script>
@@ -557,111 +551,6 @@ function populateHistoryMonths() {
       label +
       '</option>';
   }
-}
-
-function calculateMonthly(s, selectedMonth) {
-
-  var result = {
-    feestobepaid: 0,
-    feespaid: 0,
-    feesremaining: 0
-  };
-
-  if (!selectedMonth || selectedMonth === "lifetime") {
-    return result;
-  }
-
-  for (var i = 0; i < s.history.length; i++) {
-
-    var h = s.history[i];
-    var amt = Number(h.amount);
-
-    // Only read YYYY-MM
-    if (h.date.substring(0, 7) !== selectedMonth) {
-      continue;
-    }
-
-    if (h.type === "fee_due") {
-      result.feestobepaid += amt;
-    }
-
-    if (h.type === "payment") {
-      result.feespaid += amt;
-    }
-  }
-
-  result.feesremaining =
-    result.feestobepaid - result.feespaid;
-
-  return result;
-}
-
-function renderTeacherHistory() {
-
-  var selected = document.getElementById("historyMonth").value;
-  var table = document.getElementById("studentHistoryTable");
-
-  var html =
-    '<tr><th>#</th><th>Student</th><th>Date</th><th>Fees Due</th><th>Payment</th></tr>';
-
-  var n = 1;
-  var totalDue = 0;
-  var totalPaid = 0;
-
-  for (var i = 0; i < teacherData.students.length; i++) {
-
-    var s = teacherData.students[i];
-
-    if (!s.history) continue;
-
-    for (var j = 0; j < s.history.length; j++) {
-
-      var h = s.history[j];
-
-      if (!h.date) continue;
-
-      if (
-        selected !== "lifetime" &&
-        h.date.substring(0, 7) !== selected
-      ) continue;
-
-      if (h.type === "fee_due") {
-        totalDue += Number(h.amount);
-      }
-
-      if (h.type === "payment") {
-        totalPaid += Number(h.amount);
-      }
-
-      html +=
-        '<tr>' +
-        '<td>' + n++ + '</td>' +
-        '<td>' + s.name + '</td>' +
-        '<td>' + h.date + '</td>' +
-        '<td>' +
-        (h.type === "fee_due" ? "₹" + h.amount : "") +
-        '</td>' +
-        '<td>' +
-        (h.type === "payment" ? "₹" + h.amount : "") +
-        '</td>' +
-        '</tr>';
-    }
-  }
-
-  html +=
-    '<tr style="font-weight:bold">' +
-    '<td colspan="3">Total</td>' +
-    '<td>₹' + totalDue + '</td>' +
-    '<td>₹' + totalPaid + '</td>' +
-    '</tr>';
-
-  html +=
-    '<tr style="font-weight:bold">' +
-    '<td colspan="3">Remaining</td>' +
-    '<td colspan="2">₹' + (totalDue - totalPaid) + '</td>' +
-    '</tr>';
-
-  table.innerHTML = html;
 }
 
 
