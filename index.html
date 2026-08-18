@@ -80,6 +80,18 @@
     <input type="file" id="importInput" accept=".json" style="display:none;" onchange="importData(event)">
   </div>
 
+ <h3 style="margin:16px 0 8px;">Payment History</h3>
+
+<div style="text-align:center; margin-bottom:10px;">
+  <select id="historyMonth" onchange="renderStudentHistory()"
+          style="padding:8px 12px; border-radius:6px; border:1px solid #ccc;">
+  </select>
+</div>
+
+<div class="table-wrap">
+  <table id="studentHistoryTable"></table>
+</div>
+
   <!-- 4 SMART CARDS -->
   <div class="cards-row">
     <div class="card clickable" style="background:#e2e8f0;" onclick="setFilter('all')">
@@ -448,20 +460,8 @@ function renderStudent() {
         '<tr><th>Fees Paid</th><td>₹' + s.feespaid + '</td></tr>' +
         '<tr><th>Fees Remaining</th><td>₹' + remaining + '</td></tr>' +
         '<tr><th>Status</th><td class="' + sc + '">' + st + '</td></tr>';
-      var historyHTML = '<tr><th>#</th><th>Date</th><th>Fees Due</th><th>Payment</th></tr>';
-      if (s.history.length === 0) {
-        historyHTML += '<tr><td colspan="4">No payments yet</td></tr>';
-      } else {
-        for (var j = 0; j < s.history.length; j++) {
-          var p = s.history[j];
-          historyHTML += '<tr><td>' + (j+1) + '</td><td>' + p.date + '</td>';
-          historyHTML += '<td>' + (p.type === "fee_due" ? "₹" + p.amount : "") + '</td>';
-          historyHTML += '<td>' + (p.type === "payment" ? "₹" + p.amount : "") + '</td></tr>';
-        }
-      }
-      document.getElementById("studentHistoryTable").innerHTML = historyHTML;
-    })
-    .catch(function() { document.getElementById("studentTable").innerHTML = "<tr><td>No data published yet</td></tr>"; });
+      populateHistoryMonths(s);
+      renderStudentHistory();
 }
 
 function updateFeeCycles() {
@@ -503,6 +503,49 @@ function updateFeeCycles() {
   }
 }
 
+function populateHistoryMonths(s) {
+  var select = document.getElementById("historyMonth");
+
+  if (!select) return;
+
+  select.innerHTML = '<option value="lifetime">Lifetime</option>';
+
+  var months = {};
+
+  for (var i = 0; i < s.history.length; i++) {
+    var date = s.history[i].date;
+
+    if (!date) continue;
+
+    // YYYY-MM
+    var monthValue = date.substring(0, 7);
+
+    months[monthValue] = true;
+  }
+
+  var monthList = Object.keys(months);
+  monthList.sort();
+
+  for (var j = 0; j < monthList.length; j++) {
+
+    var value = monthList[j];
+
+    var parts = value.split("-");
+    var year = Number(parts[0]);
+    var month = Number(parts[1]);
+
+    var date = new Date(year, month - 1, 1);
+
+    var label = date.toLocaleString("en-IN", {
+      month: "long",
+      year: "numeric"
+    });
+
+    select.innerHTML +=
+      '<option value="' + value + '">' + label + '</option>';
+  }
+}
+
 function recalculateStudent(s) {
   var today = new Date().toISOString().split("T")[0];
 
@@ -524,6 +567,203 @@ function recalculateStudent(s) {
 
   s.feesremaining = s.feestobepaid - s.feespaid;
 }
+
+function calculateMonthly(s, selectedMonth) {
+
+  var result = {
+    feestobepaid: 0,
+    feespaid: 0,
+    feesremaining: 0
+  };
+
+  if (!selectedMonth || selectedMonth === "lifetime") {
+    return result;
+  }
+
+  for (var i = 0; i < s.history.length; i++) {
+
+    var h = s.history[i];
+    var amt = Number(h.amount);
+
+    // Only read YYYY-MM
+    if (h.date.substring(0, 7) !== selectedMonth) {
+      continue;
+    }
+
+    if (h.type === "fee_due") {
+      result.feestobepaid += amt;
+    }
+
+    if (h.type === "payment") {
+      result.feespaid += amt;
+    }
+  }
+
+  result.feesremaining =
+    result.feestobepaid - result.feespaid;
+
+  return result;
+}
+
+function renderStudentHistory() {
+
+  fetch("students.json?v=" + Date.now())
+    .then(function(r) {
+      return r.json();
+    })
+    .then(function(arr) {
+
+      var students = JSON.parse(decodeJSON(arr));
+
+      var s = null;
+
+      for (var i = 0; i < students.length; i++) {
+        if (students[i].name === loggedStudent) {
+          s = students[i];
+          break;
+        }
+      }
+
+      if (!s) throw 0;
+
+      if (!s.history) {
+        s.history = [];
+      }
+
+      var selected =
+        document.getElementById("historyMonth").value;
+
+      var history = [];
+
+      // -------------------------
+      // LIFETIME
+      // -------------------------
+
+      if (selected === "lifetime") {
+
+        history = s.history.slice();
+
+      }
+
+      // -------------------------
+      // MONTHLY
+      // -------------------------
+
+      else {
+
+        for (var j = 0; j < s.history.length; j++) {
+
+          if (
+            s.history[j].date.substring(0, 7) === selected
+          ) {
+            history.push(s.history[j]);
+          }
+
+        }
+      }
+
+      history.sort(function(a, b) {
+        return new Date(a.date) - new Date(b.date);
+      });
+
+      // -------------------------
+      // CALCULATE VIEW TOTALS
+      // -------------------------
+
+      var due = 0;
+      var paid = 0;
+
+      for (var k = 0; k < history.length; k++) {
+
+        var amount = Number(history[k].amount);
+
+        if (history[k].type === "fee_due") {
+          due += amount;
+        }
+
+        if (history[k].type === "payment") {
+          paid += amount;
+        }
+      }
+
+      var remaining = due - paid;
+
+      // -------------------------
+      // HISTORY TABLE
+      // -------------------------
+
+      var historyHTML =
+        '<tr>' +
+        '<th>#</th>' +
+        '<th>Date</th>' +
+        '<th>Fees Due</th>' +
+        '<th>Payment</th>' +
+        '</tr>';
+
+      if (history.length === 0) {
+
+        historyHTML +=
+          '<tr>' +
+          '<td colspan="4">No history for this period</td>' +
+          '</tr>';
+
+      } else {
+
+        for (var x = 0; x < history.length; x++) {
+
+          var p = history[x];
+
+          historyHTML +=
+            '<tr>' +
+            '<td>' + (x + 1) + '</td>' +
+            '<td>' + p.date + '</td>' +
+            '<td>' +
+            (p.type === "fee_due"
+              ? "₹" + p.amount
+              : "") +
+            '</td>' +
+            '<td>' +
+            (p.type === "payment"
+              ? "₹" + p.amount
+              : "") +
+            '</td>' +
+            '</tr>';
+        }
+      }
+
+      // -------------------------
+      // ADD SUMMARY ROW
+      // -------------------------
+
+      historyHTML +=
+        '<tr style="font-weight:bold;">' +
+        '<td colspan="2">Total</td>' +
+        '<td>₹' + due + '</td>' +
+        '<td>₹' + paid + '</td>' +
+        '</tr>';
+
+      historyHTML +=
+        '<tr style="font-weight:bold;">' +
+        '<td colspan="2">Remaining</td>' +
+        '<td colspan="2">₹' + remaining + '</td>' +
+        '</tr>';
+
+      document.getElementById(
+        "studentHistoryTable"
+      ).innerHTML = historyHTML;
+
+    })
+    .catch(function() {
+
+      document.getElementById(
+        "studentHistoryTable"
+      ).innerHTML =
+        '<tr><td>No history available</td></tr>';
+
+    });
+}
+
+
 
 function save()       { localStorage.setItem("teacherData", JSON.stringify(teacherData)); }
 function hide(id)     { document.getElementById(id).classList.add("hidden"); }
