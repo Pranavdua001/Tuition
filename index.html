@@ -155,6 +155,8 @@ function login() {
   if (pwd === TEACHER_PASSWORD) {
     hide("loginBox"); show("teacherBox");
     updateFeeCycles(); renderTeacher();
+    populateHistoryMonths();
+    renderTeacherHistory();
     return;
   }
   fetch("students.json?v=" + Date.now())
