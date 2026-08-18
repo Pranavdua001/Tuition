@@ -594,164 +594,73 @@ function calculateMonthly(s, selectedMonth) {
   return result;
 }
 
-function renderStudentHistory() {
+function renderTeacherHistory() {
 
-  fetch("students.json?v=" + Date.now())
-    .then(function(r) {
-      return r.json();
-    })
-    .then(function(arr) {
+  var selected = document.getElementById("historyMonth").value;
+  var table = document.getElementById("studentHistoryTable");
 
-      var students = JSON.parse(decodeJSON(arr));
+  var html =
+    '<tr><th>#</th><th>Student</th><th>Date</th><th>Fees Due</th><th>Payment</th></tr>';
 
-      var s = null;
+  var n = 1;
+  var totalDue = 0;
+  var totalPaid = 0;
 
-      for (var i = 0; i < students.length; i++) {
-        if (students[i].name === loggedStudent) {
-          s = students[i];
-          break;
-        }
+  for (var i = 0; i < teacherData.students.length; i++) {
+
+    var s = teacherData.students[i];
+
+    if (!s.history) continue;
+
+    for (var j = 0; j < s.history.length; j++) {
+
+      var h = s.history[j];
+
+      if (!h.date) continue;
+
+      if (
+        selected !== "lifetime" &&
+        h.date.substring(0, 7) !== selected
+      ) continue;
+
+      if (h.type === "fee_due") {
+        totalDue += Number(h.amount);
       }
 
-      if (!s) throw 0;
-
-      if (!s.history) {
-        s.history = [];
+      if (h.type === "payment") {
+        totalPaid += Number(h.amount);
       }
 
-      var selected =
-        document.getElementById("historyMonth").value;
-
-      var history = [];
-
-      // -------------------------
-      // LIFETIME
-      // -------------------------
-
-      if (selected === "lifetime") {
-
-        history = s.history.slice();
-
-      }
-
-      // -------------------------
-      // MONTHLY
-      // -------------------------
-
-      else {
-
-        for (var j = 0; j < s.history.length; j++) {
-
-          if (
-            s.history[j].date.substring(0, 7) === selected
-          ) {
-            history.push(s.history[j]);
-          }
-
-        }
-      }
-
-      history.sort(function(a, b) {
-        return new Date(a.date) - new Date(b.date);
-      });
-
-      // -------------------------
-      // CALCULATE VIEW TOTALS
-      // -------------------------
-
-      var due = 0;
-      var paid = 0;
-
-      for (var k = 0; k < history.length; k++) {
-
-        var amount = Number(history[k].amount);
-
-        if (history[k].type === "fee_due") {
-          due += amount;
-        }
-
-        if (history[k].type === "payment") {
-          paid += amount;
-        }
-      }
-
-      var remaining = due - paid;
-
-      // -------------------------
-      // HISTORY TABLE
-      // -------------------------
-
-      var historyHTML =
+      html +=
         '<tr>' +
-        '<th>#</th>' +
-        '<th>Date</th>' +
-        '<th>Fees Due</th>' +
-        '<th>Payment</th>' +
+        '<td>' + n++ + '</td>' +
+        '<td>' + s.name + '</td>' +
+        '<td>' + h.date + '</td>' +
+        '<td>' +
+        (h.type === "fee_due" ? "₹" + h.amount : "") +
+        '</td>' +
+        '<td>' +
+        (h.type === "payment" ? "₹" + h.amount : "") +
+        '</td>' +
         '</tr>';
+    }
+  }
 
-      if (history.length === 0) {
+  html +=
+    '<tr style="font-weight:bold">' +
+    '<td colspan="3">Total</td>' +
+    '<td>₹' + totalDue + '</td>' +
+    '<td>₹' + totalPaid + '</td>' +
+    '</tr>';
 
-        historyHTML +=
-          '<tr>' +
-          '<td colspan="4">No history for this period</td>' +
-          '</tr>';
+  html +=
+    '<tr style="font-weight:bold">' +
+    '<td colspan="3">Remaining</td>' +
+    '<td colspan="2">₹' + (totalDue - totalPaid) + '</td>' +
+    '</tr>';
 
-      } else {
-
-        for (var x = 0; x < history.length; x++) {
-
-          var p = history[x];
-
-          historyHTML +=
-            '<tr>' +
-            '<td>' + (x + 1) + '</td>' +
-            '<td>' + p.date + '</td>' +
-            '<td>' +
-            (p.type === "fee_due"
-              ? "₹" + p.amount
-              : "") +
-            '</td>' +
-            '<td>' +
-            (p.type === "payment"
-              ? "₹" + p.amount
-              : "") +
-            '</td>' +
-            '</tr>';
-        }
-      }
-
-      // -------------------------
-      // ADD SUMMARY ROW
-      // -------------------------
-
-      historyHTML +=
-        '<tr style="font-weight:bold;">' +
-        '<td colspan="2">Total</td>' +
-        '<td>₹' + due + '</td>' +
-        '<td>₹' + paid + '</td>' +
-        '</tr>';
-
-      historyHTML +=
-        '<tr style="font-weight:bold;">' +
-        '<td colspan="2">Remaining</td>' +
-        '<td colspan="2">₹' + remaining + '</td>' +
-        '</tr>';
-
-      document.getElementById(
-        "studentHistoryTable"
-      ).innerHTML = historyHTML;
-
-    })
-    .catch(function() {
-
-      document.getElementById(
-        "studentHistoryTable"
-      ).innerHTML =
-        '<tr><td>No history available</td></tr>';
-
-    });
+  table.innerHTML = html;
 }
-
 
 
 function save()       { localStorage.setItem("teacherData", JSON.stringify(teacherData)); }
